@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 
 <PageTitle>Home</PageTitle>
 
@@ -9,7 +9,7 @@
         <div class="actions">
             <button @onclick=OnNewGame>Start Game</button>
         </div>
-        <CanvasManager @ref="_canvasManager" />
+        <CanvasManager @ref="canvasManager" />
     </div>
     <div class="status">
         <span>Status: @(FallingBlocksGame.Lose ? "Lost!" : "Playing...")</span>

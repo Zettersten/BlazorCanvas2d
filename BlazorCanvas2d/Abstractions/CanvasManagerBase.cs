@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
-
 namespace BlazorCanvas2d.Abstractions;
 
 public abstract class CanvasManagerBase : ComponentBase

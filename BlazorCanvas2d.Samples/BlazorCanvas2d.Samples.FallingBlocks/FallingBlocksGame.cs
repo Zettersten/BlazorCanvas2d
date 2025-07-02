@@ -1,4 +1,4 @@
-﻿namespace Blazorex.Samples.FallingBlocks;
+namespace BlazorCanvas2d.Samples.FallingBlocks;
 
 /// <summary>
 /// /https://github.com/dionyziz/canvas-tetris/blob/master/js/render.js
@@ -20,7 +20,7 @@ public static class FallingBlocksGame
         [1, 1, 0, 0, 1, 1],
         [1, 1, 0, 0, 0, 1, 1],
         [0, 1, 1, 0, 1, 1],
-        [0, 1, 0, 0, 1, 1, 1]
+        [0, 1, 0, 0, 1, 1, 1],
     ];
 
     public static readonly string[] Colors =
@@ -31,18 +31,17 @@ public static class FallingBlocksGame
         "yellow",
         "red",
         "green",
-        "purple"
+        "purple",
     ];
 
-    public static readonly Dictionary<int, string> KeyMap =
-        new()
-        {
-            { 37, "left" }, // ArrowLeft
-            { 39, "right" }, // ArrowRight
-            { 40, "down" }, // ArrowDown
-            { 38, "rotate" }, // ArrowUp
-            { 32, "drop" } // Space
-        };
+    public static readonly Dictionary<int, string> KeyMap = new()
+    {
+        { 37, "left" }, // ArrowLeft
+        { 39, "right" }, // ArrowRight
+        { 40, "down" }, // ArrowDown
+        { 38, "rotate" }, // ArrowUp
+        { 32, "drop" }, // Space
+    };
 
     public static int[][] Board { get; set; } = [];
 
@@ -64,9 +63,7 @@ public static class FallingBlocksGame
 
     public static void Init()
     {
-        Board = [..Enumerable
-        .Range(0, ROWS)
-        .Select(_ => new int[COLS])];
+        Board = [.. Enumerable.Range(0, ROWS).Select(_ => new int[COLS])];
     }
 
     public static void Render(IRenderContext ctx)

@@ -1,5 +1,4 @@
-﻿using BlazorCanvas2d.Interop;
-using BlazorCanvas2d.Renderer;
+﻿using BlazorCanvas2d.Renderer;
 
 namespace BlazorCanvas2d;
 
@@ -30,9 +29,9 @@ internal sealed record CanvasPattern : CanvasProperty<int>, ICanvasPattern
                 this._marshalReference with
                 {
                     IsElementRef = false,
-                    ClassInitializer = "DOMMatrix"
+                    ClassInitializer = "DOMMatrix",
                 },
-                new double[] { a, b, c, d, e, f }
+                new double[] { a, b, c, d, e, f },
             ]
         );
 
@@ -64,7 +63,7 @@ internal sealed record CanvasPattern : CanvasProperty<int>, ICanvasPattern
                 this._marshalReference with
                 {
                     IsElementRef = false,
-                    ClassInitializer = "DOMMatrix"
+                    ClassInitializer = "DOMMatrix",
                 },
                 new double[]
                 {
@@ -83,8 +82,8 @@ internal sealed record CanvasPattern : CanvasProperty<int>, ICanvasPattern
                     m41,
                     m42,
                     m43,
-                    m44
-                }
+                    m44,
+                },
             ]
         );
 

@@ -1,4 +1,4 @@
-﻿namespace Blazorex.Samples.KeyAndMouse;
+namespace BlazorCanvas2d.Samples.KeyAndMouse;
 
 /// <summary>
 /// High-performance key rain engine that visualizes keystrokes as falling characters
@@ -14,6 +14,7 @@ public static class KeyRainEngine
 
     // Styling constants
     private const string CanvasBackground = "#fff";
+
     private const string KeyBackground = "#2c3e50";
     private const string KeyBorder = "#34495e";
     private const string KeyText = "#ecf0f1";
@@ -21,10 +22,12 @@ public static class KeyRainEngine
 
     // Performance: Pre-allocate list with reasonable capacity and limit max keys
     private static readonly List<FallingKey> _fallingKeys = new(50);
+
     private const int MaxKeys = 20; // Prevent performance degradation
 
     // Prevent duplicate key events
     private static readonly HashSet<string> _recentKeys = new();
+
     private static DateTime _lastKeyTime = DateTime.MinValue;
     private const int DedupeWindowMs = 50; // 50ms window to prevent duplicates
 
@@ -161,6 +164,6 @@ public readonly record struct FallingKey(string Character, float X, float Y, flo
         this with
         {
             Velocity = Velocity + KeyRainEngine.Gravity,
-            Y = Y + Velocity
+            Y = Y + Velocity,
         };
 }

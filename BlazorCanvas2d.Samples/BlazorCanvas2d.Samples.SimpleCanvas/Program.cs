@@ -1,4 +1,4 @@
-using Blazorex.Samples.SimpleCanvas;
+using BlazorCanvas2d.Samples.SimpleCanvas;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
@@ -8,7 +8,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+    BaseAddress = new Uri(builder.HostEnvironment.BaseAddress),
 });
 
 await builder.Build().RunAsync();

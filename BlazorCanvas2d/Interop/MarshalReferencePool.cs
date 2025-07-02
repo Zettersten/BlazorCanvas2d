@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
-using Microsoft.AspNetCore.Components;
 
 namespace BlazorCanvas2d.Interop;
 
@@ -13,13 +11,12 @@ internal sealed class MarshalReferencePool
     public MarshalReference Next(ElementReference elementReference) =>
         elementReference.Id switch
         {
-            null
-                => throw new ArgumentException(
-                    "ElementReference.Id cannot be null",
-                    nameof(elementReference)
-                ),
+            null => throw new ArgumentException(
+                "ElementReference.Id cannot be null",
+                nameof(elementReference)
+            ),
             var id when int.TryParse(id, out var hash) => this.GetOrCreateReference(hash, true),
-            var id => this.GetOrCreateReference(id.GetHashCode(), true)
+            var id => this.GetOrCreateReference(id.GetHashCode(), true),
         };
 
     public MarshalReference Next(params object[] methodParams) =>
@@ -27,27 +24,24 @@ internal sealed class MarshalReferencePool
         {
             0 => this.GetOrCreateReference(0, false),
             1 => this.GetOrCreateReference(methodParams[0]?.GetHashCode() ?? 0, false),
-            2
-                => this.GetOrCreateReference(
-                    HashCode.Combine(methodParams[0], methodParams[1]),
-                    false
+            2 => this.GetOrCreateReference(
+                HashCode.Combine(methodParams[0], methodParams[1]),
+                false
+            ),
+            3 => this.GetOrCreateReference(
+                HashCode.Combine(methodParams[0], methodParams[1], methodParams[2]),
+                false
+            ),
+            4 => this.GetOrCreateReference(
+                HashCode.Combine(
+                    methodParams[0],
+                    methodParams[1],
+                    methodParams[2],
+                    methodParams[3]
                 ),
-            3
-                => this.GetOrCreateReference(
-                    HashCode.Combine(methodParams[0], methodParams[1], methodParams[2]),
-                    false
-                ),
-            4
-                => this.GetOrCreateReference(
-                    HashCode.Combine(
-                        methodParams[0],
-                        methodParams[1],
-                        methodParams[2],
-                        methodParams[3]
-                    ),
-                    false
-                ),
-            _ => this.GetOrCreateReference(CreateKeyFromLargeParams(methodParams), false)
+                false
+            ),
+            _ => this.GetOrCreateReference(CreateKeyFromLargeParams(methodParams), false),
         };
 
     [MethodImpl(MethodImplOptions.NoInlining)]

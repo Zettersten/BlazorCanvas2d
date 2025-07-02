@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-
-namespace BlazorCanvas2d.Interop;
+﻿namespace BlazorCanvas2d.Interop;
 
 [StructLayout(LayoutKind.Sequential, Pack = 4)]
 internal readonly record struct MarshalReference

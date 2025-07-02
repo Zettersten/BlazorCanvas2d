@@ -1,4 +1,4 @@
-﻿namespace Blazorex.Samples.Services;
+namespace BlazorCanvas2d.Samples.Services;
 
 public class FireRenderer
 {
@@ -49,7 +49,7 @@ public class FireRenderer
         new Color(R: 207, G: 207, B: 111),
         new Color(R: 223, G: 223, B: 159),
         new Color(R: 239, G: 239, B: 199),
-        new Color(R: 255, G: 255, B: 255)
+        new Color(R: 255, G: 255, B: 255),
     };
 
     public FireRenderer(IRenderContext context, int width, int height)

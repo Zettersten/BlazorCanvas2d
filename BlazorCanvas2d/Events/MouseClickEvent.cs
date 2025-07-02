@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using BlazorCanvas2d.Serialization;
+﻿using BlazorCanvas2d.Serialization;
 
 namespace BlazorCanvas2d;
 

@@ -1,73 +1,65 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
-
-	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
-		<LangVersion>latest</LangVersion>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<Authors>Erik Zettersten</Authors>
-		<Copyright>Copyright © 2024 Erik Zettersten</Copyright>
-		<Company>BlazorCanvas2d</Company>
-		<Product>BlazorCanvas2d SDK</Product>
-		<PackageId>BlazorCanvas2d</PackageId>
-		<Version>$(GITHUB_REF_NAME.TrimStart('v'))</Version>
-		<Description></Description>
-		<PackageProjectUrl>https://github.com/Zettersten/BlazorCanvas2d</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zettersten/BlazorCanvas2d</RepositoryUrl>
-		<RepositoryType>git</RepositoryType>
-		<PackageIcon>icon.png</PackageIcon>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<PackageReleaseNotes></PackageReleaseNotes>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<PublishAot>false</PublishAot>
-		<NoWarn>CS1591;CS0618;CS1573</NoWarn>
-	</PropertyGroup>
-	
-	<PropertyGroup>
-		<TypeScriptCompileOnSaveEnabled>false</TypeScriptCompileOnSaveEnabled>
-		<TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
-		<TypeScriptTarget>ES2020</TypeScriptTarget>
-		<TypeScriptLib>ES2020,DOM,DOM.Iterable</TypeScriptLib>
-		<TypeScriptModuleKind>ES2020</TypeScriptModuleKind>
-		<TypeScriptStrict>true</TypeScriptStrict>
-		<TypeScriptESModuleInterop>true</TypeScriptESModuleInterop>
-		<TypeScriptSkipLibCheck>true</TypeScriptSkipLibCheck>
-		<TypeScriptDeclaration>true</TypeScriptDeclaration>
-		<TypeScriptRemoveComments>true</TypeScriptRemoveComments>
-		<TypeScriptSourceMap>false</TypeScriptSourceMap>
-		<TypeScriptDeclarationMap>false</TypeScriptDeclarationMap>
-		<TypeScriptNoImplicitReturns>true</TypeScriptNoImplicitReturns>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<DebugType>portable</DebugType>
-		<DebugSymbols>true</DebugSymbols>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<SupportedPlatform Include="browser" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.5" />
-		<PackageReference Include="Microsoft.TypeScript.MSBuild" Version="5.8.3">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeInPackageReference>false</IncludeInPackageReference>
-		</PackageReference>
-	</ItemGroup>
-
-	<ItemGroup>
-		<TypeScriptCompile Include="wwwroot/**/*.ts" />
-		<Content Include="wwwroot/**/*.d.ts" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Include="..\icon.png" Pack="true" PackagePath="\" />
-		<None Include="..\README.md" Pack="true" PackagePath="\" />
-	</ItemGroup>
-
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>Erik Zettersten</Authors>
+    <Copyright>Copyright © 2024 Erik Zettersten</Copyright>
+    <Company>BlazorCanvas2d</Company>
+    <Product>BlazorCanvas2d SDK</Product>
+    <PackageId>BlazorCanvas2d</PackageId>
+    <Version>$(GITHUB_REF_NAME.TrimStart('v'))</Version>
+    <Description></Description>
+    <PackageProjectUrl>https://github.com/Zettersten/BlazorCanvas2d</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Zettersten/BlazorCanvas2d</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PublishAot>false</PublishAot>
+    <NoWarn>CS1591;CS0618;CS1573</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TypeScriptCompileOnSaveEnabled>false</TypeScriptCompileOnSaveEnabled>
+    <TypeScriptToolsVersion>Latest</TypeScriptToolsVersion>
+    <TypeScriptTarget>ES2020</TypeScriptTarget>
+    <TypeScriptLib>ES2020,DOM,DOM.Iterable</TypeScriptLib>
+    <TypeScriptModuleKind>ES2020</TypeScriptModuleKind>
+    <TypeScriptStrict>true</TypeScriptStrict>
+    <TypeScriptESModuleInterop>true</TypeScriptESModuleInterop>
+    <TypeScriptSkipLibCheck>true</TypeScriptSkipLibCheck>
+    <TypeScriptDeclaration>true</TypeScriptDeclaration>
+    <TypeScriptRemoveComments>true</TypeScriptRemoveComments>
+    <TypeScriptSourceMap>false</TypeScriptSourceMap>
+    <TypeScriptDeclarationMap>false</TypeScriptDeclarationMap>
+    <TypeScriptNoImplicitReturns>true</TypeScriptNoImplicitReturns>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.6" />
+    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="5.8.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeInPackageReference>false</IncludeInPackageReference>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <TypeScriptCompile Include="wwwroot/**/*.ts" />
+    <Content Include="wwwroot/**/*.d.ts" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\icon.png" Pack="true" PackagePath="\" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Components;
-
-namespace BlazorCanvas2d;
+﻿namespace BlazorCanvas2d;
 
 /// <summary>
 /// Canvas abstraction for Blazor C#.

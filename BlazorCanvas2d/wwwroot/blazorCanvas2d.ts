@@ -34,7 +34,6 @@ const PRINTABLE_KEYS = ['Enter', 'Tab', 'Backspace', 'Delete'];
  * @returns A frozen BlazorexAPI instance
  */
 export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
-
     // ========================================
     // PRIVATE STATE MANAGEMENT
     // ========================================
@@ -45,7 +44,7 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
     /** Cached DOM elements indexed by Blazor element reference ID */
     const elementCache = new Map<string, Element>();
 
-    /** 
+    /**
      * Marshal references for complex canvas objects (gradients, patterns, etc.)
      * Maps C# MarshalReference.Id to the actual JavaScript canvas object
      */
@@ -297,7 +296,6 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
 
         // Handle C# MarshalReference objects
         if (isMarshalReference(firstParam)) {
-
             const marshalRef = firstParam as MarshalReference;
 
             if (!marshalRef.isElementRef) {
@@ -307,7 +305,6 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
                 const existingObject = marshalledObjects.get(marshalRef.id) as Record<string, Function> | undefined;
 
                 if (existingObject?.[methodName]) {
-
                     if (marshalRef.classInitializer) {
                         const Constructor = (globalThis as any)[marshalRef.classInitializer];
                         existingObject[methodName](new Constructor(...params));
@@ -326,7 +323,6 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
 
             params[0] = getCachedElement(marshalRef);
         }
-
 
         const result = typedContext[methodName](...params);
 
@@ -707,7 +703,6 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
                         size: blob.size,
                         objectUrl: objectUrl
                     });
-
                 } catch (error) {
                     console.error(`Error converting canvas '${canvasId}' to blob:`, error);
                     resolve(null);

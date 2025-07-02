@@ -1,4 +1,4 @@
-namespace Blazorex.Samples.KeyAndMouse.Pages;
+namespace BlazorCanvas2d.Samples.KeyAndMouse.Pages;
 
 public partial class Home
 {
@@ -25,7 +25,7 @@ public partial class Home
                 WillReadFrequently = false,
                 OnCanvasReady = OnCanvasReady,
                 OnFrameReady = OnFrameReady,
-                OnKeyDown = OnKeyPressed
+                OnKeyDown = OnKeyPressed,
             }
         );
     }

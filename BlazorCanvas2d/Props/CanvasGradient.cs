@@ -1,5 +1,4 @@
-﻿using BlazorCanvas2d.Interop;
-using BlazorCanvas2d.Renderer;
+﻿using BlazorCanvas2d.Renderer;
 
 namespace BlazorCanvas2d;
 

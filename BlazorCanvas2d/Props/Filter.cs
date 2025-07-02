@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace BlazorCanvas2d;
+﻿namespace BlazorCanvas2d;
 
 public sealed record Filter : CanvasProperty<string>
 {

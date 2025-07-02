@@ -1,6 +1,4 @@
 ﻿using BlazorCanvas2d.Renderer;
-using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 
 namespace BlazorCanvas2d;
 
@@ -43,7 +41,7 @@ public abstract class CanvasBase : ComponentBase, ICanvas
                 colorSpace = this.ColorSpace != null
                     ? this.ColorSpace.Value
                     : ColorSpace.Srgb.Value,
-                willReadFrequently = this.WillReadFrequently
+                willReadFrequently = this.WillReadFrequently,
             }
         );
 

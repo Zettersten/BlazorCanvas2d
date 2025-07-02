@@ -1,4 +1,4 @@
-﻿namespace Blazorex.Samples.Services;
+namespace BlazorCanvas2d.Samples.Services;
 
 public record struct Color(byte R, byte G, byte B)
 {

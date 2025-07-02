@@ -1,4 +1,4 @@
-using Blazorex.Samples.MouseCoords;
+using BlazorCanvas2d.Samples.MouseCoords;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 

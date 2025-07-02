@@ -1,9 +1,4 @@
-﻿using System;
-using System.Buffers;
-using System.IO;
-using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Buffers;
 
 namespace BlazorCanvas2d;
 
@@ -137,7 +132,7 @@ internal sealed class ReadOnlyMemoryStream(ReadOnlyMemory<byte> memory) : Stream
             SeekOrigin.Begin => offset,
             SeekOrigin.Current => this.Position + offset,
             SeekOrigin.End => this.Length + offset,
-            _ => throw new ArgumentException("Invalid seek origin", nameof(origin))
+            _ => throw new ArgumentException("Invalid seek origin", nameof(origin)),
         };
 
     public override void Flush() { }
