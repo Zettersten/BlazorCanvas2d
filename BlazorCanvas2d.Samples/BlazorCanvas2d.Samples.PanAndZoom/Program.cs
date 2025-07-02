@@ -1,3 +1,5 @@
+using BlazorCanvas2d.Samples.PanAndZoom.Components;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
