@@ -1,0 +1,154 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<img @ref="_spritesheet" hidden src="blazor.png" />
+
+
+<div class="container mx-auto">
+    <div class="d-flex justify-content-center gap-5">
+        <div>
+            <CanvasManager @ref="_canvasManager" />
+        </div>
+        <div class="w-50 h-50">
+            <div class="p-5 border-1 shadow bg-light rounded d-flex flex-column gap-3 justify-content-center align-content-center">
+                @if (!string.IsNullOrEmpty(this.blobUrl))
+                {
+                    <img class="w-100 d-block mx-auto" src="@this.blobUrl" />
+                } else
+                {
+                    <div style="height: 264px;" class="w-100 d-block mx-auto bg-primary"></div>
+                }
+                <div class=" d-flex flex-column text-center gap-2">
+                    <button class="btn btn-primary" @onclick="() => this.GetBlobDataURL()">Take Screenshot</button>
+                    <small class="text-muted">Uses the <kbd>.ToObjectUrl</kbd> Method</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    CanvasManager _canvasManager;
+    ElementReference _spritesheet;
+    IRenderContext _context;
+    ICanvas _canvas;
+
+    int _width = 800;
+    int _height = 600;
+
+    float _x = 400;
+    float _y = 300;
+
+    float _dx = 1;
+    float _dy = 1;
+    float _spriteSpeed = 1.25f;
+    float _spriteMaxSpeed = 5f;
+
+    int _spriteWidth = 100;
+    int _spriteHeight = 100;
+
+    float _lastUpdate = 0;
+    float _elapsedTime = 0;
+
+    string blobUrl = string.Empty;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _canvasManager.CreateCanvas("main", new CanvasCreationOptions()
+            {
+                Hidden = false,
+                Width = _width,
+                Height = _height,
+                OnCanvasReady = this.OnMainCanvasReady,
+                OnFrameReady = this.OnMainFrameReady,
+                OnResize = this.OnMainCanvasResize,
+            });
+    }
+
+    private void OnMainCanvasReady(ICanvas canvas)
+    {
+        _canvas = canvas;
+        _context = canvas.RenderContext;
+    }
+
+    private void OnMainFrameReady(float timestamp)
+    {
+        this.Update(timestamp);
+        this.Render();
+    }
+
+    private void OnMainCanvasResize(Size windowSize)
+    {
+
+    }
+
+    private async ValueTask GetBlobDataURL()
+    {
+        this.blobUrl = await this._canvas.CreateObjectURL("image/png");
+    }
+
+    private void Update(float timeStamp)
+    {
+        _elapsedTime = timeStamp - _lastUpdate;
+        _lastUpdate = timeStamp;
+
+        if (_x + _spriteWidth >= _width || _x < 0)
+            _dx = -_dx;
+
+        if (_y + _spriteHeight >= _height || _y < 0)
+            _dy = -_dy;
+
+        var speed = Math.Clamp(_spriteSpeed * _elapsedTime, 0, _spriteMaxSpeed);
+        _x += _dx * speed;
+        _y += _dy * speed;
+    }
+
+    private void Render()
+    {
+        _context.GlobalCompositeOperation = GlobalCompositeOperation.SourceOver;
+        _context.Filter = Filter.None();
+        _context.ClearRect(0, 0, _width, _height);
+
+        var gradient = _context.CreateLinearGradient(20, 0, 220, 0);
+        gradient.AddColorStop(0, "green");
+        gradient.AddColorStop(0.5f, "cyan");
+        gradient.AddColorStop(1, "green");
+
+
+        var pattern = _context.CreatePattern(_spritesheet, RepeatPattern.RepeatX);
+        pattern.SetTransform(1, 0.2, 0.8, 1, 0, 0);
+
+        // fill with the gradient on top
+        _context.FillStyle = gradient;
+        _context.FillRect(0, 0, _width, _height);
+
+        //set blending mode to something like 'multiply' or 'overlay' (try different modes!)
+        _context.GlobalCompositeOperation = GlobalCompositeOperation.Overlay;
+
+        /// fill with the pattern first
+        _context.FillStyle = pattern;
+        _context.FillRect(0, 0, _width, _height);
+
+        // reset composite operation to default
+        _context.GlobalCompositeOperation = GlobalCompositeOperation.SourceOver;
+
+        // draws a yellow border around the sprite
+        // _context.Filter = Filter.Blur(2);
+        _context.StrokeStyle = "rgb(255, 255,0)";
+        _context.LineWidth = 3;
+        _context.StrokeRect(_x, _y, _spriteWidth, _spriteHeight);
+        _context.Filter = Filter.None();
+
+        // draws the sprite
+        // _context.GlobalCompositeOperation = GlobalCompositeOperation.Multiply;
+        // _context.Filter = Filter.DropShadow(25, 25, 2, "#000000");
+        _context.DrawImage(_spritesheet, _x, _y, _spriteWidth, _spriteHeight);
+    }
+}

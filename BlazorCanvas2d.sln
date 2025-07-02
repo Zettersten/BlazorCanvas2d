@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32901.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorCanvas2d", "BlazorCanvas2d\BlazorCanvas2d.csproj", "{2C393FFB-1D3A-F195-7BA5-6B014B8A4890}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "misc", "misc", "{C841F5C2-8F30-5BE9-ECA6-260644CF6F9F}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		icon.png = icon.png
+		LICENSE = LICENSE
+		readme.md = readme.md
+		version.json = version.json
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2C393FFB-1D3A-F195-7BA5-6B014B8A4890}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C393FFB-1D3A-F195-7BA5-6B014B8A4890}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C393FFB-1D3A-F195-7BA5-6B014B8A4890}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C393FFB-1D3A-F195-7BA5-6B014B8A4890}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4E38A4B6-BFE1-4015-B014-748F68320AC4}
+	EndGlobalSection
+EndGlobal

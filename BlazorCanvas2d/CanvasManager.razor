@@ -1,0 +1,38 @@
+﻿@inherits CanvasManagerBase
+
+<div class="blazorCanvas2d-canvases">
+    <CascadingValue Value=@this>
+    @foreach (var (name, options) in _names)
+    {
+        if(options.OnCanvasReadyAsync is not null && options.OnCanvasReady is not null)
+        {
+            throw new InvalidOperationException($"Cannot set both {nameof(options.OnCanvasReady)} and {nameof(options.OnCanvasReadyAsync)}");
+        }
+
+        EventCallback<ICanvas> onCanvasReady = 
+            options.OnCanvasReadyAsync != null ?
+            EventCallback.Factory.Create<ICanvas>(this, async (canvas) => await options.OnCanvasReadyAsync(canvas)) :
+            EventCallback.Factory.Create<ICanvas>(this, options.OnCanvasReady);
+       
+        <div id="@(name)Container" class="blazorCanvas2d-canvas-container" hidden="@options.Hidden">
+            <Canvas @ref="_canvases[name]"
+                OnCanvasReady="@onCanvasReady"
+                OnFrameReady="@options.OnFrameReady"
+                OnMouseMove="@options.OnMouseMove"
+                OnMouseWheel="@options.OnMouseWheel"
+                OnMouseDown="@options.OnMouseDown"
+                OnMouseUp="@options.OnMouseUp"
+                OnKeyDown="@options.OnKeyDown"
+                OnKeyUp="@options.OnKeyUp"
+                OnResize="@options.OnResize"
+                Width="@options.Width"
+                Height="@options.Height"
+                Alpha="@options.Alpha"
+                ColorSpace="@options.ColorSpace"
+                Desynchronized="@options.Desynchronized"
+                WillReadFrequently="@options.WillReadFrequently"
+                Name="@name"/>
+        </div>
+    }
+    </CascadingValue>
+</div> 
