@@ -11,11 +11,15 @@
             <div class="relative w-full max-w-full">
                 <!-- Canvas Container -->
                 <div class="relative bg-white rounded border border-slate-500 overflow-hidden"
-                     style="width: fit-content; max-width: 100%; max-height: 80vh; margin: 0 auto;">
+                     style="width: fit-content; max-width: 100%; margin: 0 auto;">
                     <CanvasManager @ref="canvasManager" />
-                    <!-- Canvas Info Overlay -->
+                    <!-- Canvas Info Overlay showing actual export dimensions -->
                     <div class="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-1 py-0.5 rounded">
-                        @canvasW × @canvasH
+                        @canvasConfig.ActualWidth × @canvasConfig.ActualHeight
+                        @if (canvasConfig.IsScaled)
+                        {
+                            <span class="text-slate-300"> (scaled)</span>
+                        }
                     </div>
                 </div>
             </div>

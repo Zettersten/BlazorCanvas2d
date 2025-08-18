@@ -1,3 +1,5 @@
+using BlazorCanvas2d.Extensions;
+using BlazorCanvas2d.Helpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using VeeFriends.Characters;
@@ -59,8 +61,8 @@ public partial class Home
 
     // ------- Canvas size/presets -------
     private string presetKey = "PFP 1:1";
-    private int canvasW = 500;
-    private int canvasH = 500;
+    private ResponsiveCanvasHelper.ResponsiveCanvasConfig canvasConfig =
+        ResponsiveCanvasHelper.ResponsiveCanvasConfig.Create(500, 500);
 
     // ------- Background -------
     private string bgHex = "#00ad83";
@@ -108,16 +110,11 @@ public partial class Home
             return;
         }
 
-        this.canvasManager.CreateCanvas(
+        this.canvasManager.CreateResponsiveCanvas(
             "rare-main",
-            new CanvasCreationOptions
-            {
-                Hidden = false,
-                Width = this.canvasW,
-                Height = this.canvasH,
-                OnCanvasReady = this.OnMainCanvasReady,
-                OnFrameReady = this.OnMainFrameReady,
-            }
+            this.canvasConfig,
+            this.OnMainCanvasReady,
+            this.OnMainFrameReady
         );
 
         base.OnAfterRender(firstRender);
@@ -435,7 +432,7 @@ public partial class Home
             return;
         }
 
-        this.canvas.Resize(this.canvasW, this.canvasH);
+        this.canvas.Resize(this.canvasConfig.DisplayWidth, this.canvasConfig.DisplayHeight);
         this.poseIndex = 0;
         this.offsetX = 0;
         this.offsetY = 0;
@@ -454,10 +451,10 @@ public partial class Home
             return;
         }
 
-        this.ctx.FillStyle = this.bgHex;
-        this.ctx.FillRect(0, 0, this.canvasW, this.canvasH);
+        // Clear canvas with background color
+        this.canvas.Clear(this.bgHex);
 
-        // Background
+        // Background pattern using helper
         if (this.backgroundType != "solid")
         {
             var bgRef = this.BackgroundPatterns.FirstOrDefault(x => this.backgroundType == x.Name);
@@ -465,39 +462,17 @@ public partial class Home
 
             if (bgImageRef.Id != null)
             {
-                // Calculate background-size: cover behavior
-                var originalWidth = bgRef.Width;
-                var originalHeight = bgRef.Height;
-                var canvasAspectRatio = (float)this.canvasW / this.canvasH;
-                var imageAspectRatio = originalWidth / originalHeight;
-
-                float scaledWidth,
-                    scaledHeight;
-                float offsetX = 0,
-                    offsetY = 0;
-
-                // Scale to cover the canvas (like CSS background-size: cover)
-                if (imageAspectRatio > canvasAspectRatio)
-                {
-                    // Image is wider than canvas ratio - scale to fit height, crop width
-                    scaledHeight = this.canvasH;
-                    scaledWidth = scaledHeight * imageAspectRatio;
-                    offsetX = (this.canvasW - scaledWidth) / 2f; // Center horizontally
-                }
-                else
-                {
-                    // Image is taller than canvas ratio - scale to fit width, crop height
-                    scaledWidth = this.canvasW;
-                    scaledHeight = scaledWidth / imageAspectRatio;
-                    offsetY = (this.canvasH - scaledHeight) / 2f; // Center vertically
-                }
-
-                // Draw background image centered and covering the canvas
-                this.ctx.DrawImage(bgImageRef, offsetX, offsetY, scaledWidth, scaledHeight);
+                this.ctx.DrawBackgroundImageCover(
+                    bgImageRef,
+                    bgRef.Width,
+                    bgRef.Height,
+                    this.canvasConfig.DisplayWidth,
+                    this.canvasConfig.DisplayHeight
+                );
             }
         }
 
-        // Character sprite
+        // Character sprite using helper extension
         if (
             this.ImageRefs.Count > 0
             && this.poseIndex >= 0
@@ -508,58 +483,57 @@ public partial class Home
 
             if (img is { Id: not null })
             {
-                this.ctx.Save();
-                var cx = this.canvasW / 2f + this.offsetX;
-                var cy = this.canvasH / 2f + this.offsetY;
-                this.ctx.Translate(cx, cy);
-                this.ctx.Rotate((float)(this.rotationDeg * Math.PI / 180.0));
-                this.ctx.Scale(this.flipped ? -1f : 1f, 1f);
-
-                // Draw centered at origin with proper aspect ratio
                 var (aspectRatio, scaledWidth, scaledHeight) =
-                    this.GetDimensions() ?? (1f, this.charSizePx, this.charSizePx);
+                    this.GetDimensions()
+                    ?? (
+                        1f,
+                        this.charSizePx * this.canvasConfig.Scale,
+                        this.charSizePx * this.canvasConfig.Scale
+                    );
 
-                this.ctx.DrawImage(
+                var centerX =
+                    this.canvasConfig.DisplayWidth / 2f
+                    + this.canvasConfig.ScaleToDisplay(this.offsetX);
+                var centerY =
+                    this.canvasConfig.DisplayHeight / 2f
+                    + this.canvasConfig.ScaleToDisplay(this.offsetY);
+                var rotation = this.rotationDeg * MathF.PI / 180.0f;
+
+                this.ctx.DrawImageCentered(
                     img,
-                    -scaledWidth / 2f,
-                    -scaledHeight / 2f,
+                    centerX,
+                    centerY,
                     scaledWidth,
-                    scaledHeight
+                    scaledHeight,
+                    rotation,
+                    this.flipped
                 );
-                this.ctx.Restore();
             }
         }
 
-        // Text (multiline, centered baseline)
+        // Text using helper extension
         if (!string.IsNullOrWhiteSpace(this.text))
         {
-            this.ctx.Save();
-            this.ctx.Font = $"{this.textSize}px {availableFonts[this.textFontFamily]}";
-            this.ctx.FillStyle = this.textHex;
-            this.ctx.TextAlign = this.textAlign;
-            this.ctx.TextBaseline = TextBaseline.Middle;
+            var shadow = this.textShadow
+                ? TextShadow.DropShadow(4 * this.canvasConfig.Scale, 2 * this.canvasConfig.Scale)
+                : null;
+            var font =
+                $"{this.textSize * this.canvasConfig.Scale}px {availableFonts[this.textFontFamily]}";
+            var x =
+                this.canvasConfig.DisplayWidth / 2f + this.canvasConfig.ScaleToDisplay(this.textX);
+            var y =
+                this.canvasConfig.DisplayHeight / 2f + this.canvasConfig.ScaleToDisplay(this.textY);
 
-            if (this.textShadow)
-            {
-                this.ctx.ShadowColor = "rgba(0,0,0,0.7)";
-                this.ctx.ShadowBlur = 4;
-                this.ctx.ShadowOffsetX = 0;
-                this.ctx.ShadowOffsetY = 2;
-            }
-
-            var tx = this.canvasW / 2f + this.textX;
-            var ty = this.canvasH / 2f + this.textY;
-
-            var lines = this.text.Replace("\r", "").Split('\n');
-            var lh = (int)(this.textSize * 1.2);
-            var startY = ty - (lh * (lines.Length - 1)) / 2f;
-
-            for (int i = 0; i < lines.Length; i++)
-            {
-                this.ctx.FillText(lines[i], tx, startY + i * lh);
-            }
-
-            this.ctx.Restore();
+            this.ctx.DrawStyledText(
+                this.text,
+                x,
+                y,
+                font,
+                this.textHex,
+                this.textAlign,
+                TextBaseline.Middle,
+                shadow
+            );
         }
     }
 
@@ -569,8 +543,7 @@ public partial class Home
     {
         this.presetKey = (string)e.Value!;
         var (w, h) = presets[this.presetKey];
-        this.canvasW = w;
-        this.canvasH = h;
+        this.canvasConfig = ResponsiveCanvasHelper.ResponsiveCanvasConfig.Create(w, h);
         this.ResizeCanvas();
     }
 
@@ -620,7 +593,7 @@ public partial class Home
 
     private void OnTextShadowToggle(ChangeEventArgs e) => this.textShadow = (bool)e.Value!;
 
-    // ---------- Export via ICanvas with automatic download ----------
+    // ---------- Export using extension method ----------
     private async Task ExportAsync()
     {
         if (this.canvas is null || this.isExporting)
@@ -631,44 +604,97 @@ public partial class Home
             this.isExporting = true;
             this.StateHasChanged();
 
-            var mime = "image/png";
-            var quality = (double?)null;
-
-            // Create object URL for the canvas content
-            var url = await this.canvas.CreateObjectURL(mime, quality);
-
-            var ext = mime switch
-            {
-                "image/jpeg" => "jpg",
-                "image/webp" => "webp",
-                _ => "png",
-            };
-
             var fileName =
-                $"vf_{this.Character?.Slug ?? "character"}_pose{this.poseIndex}_{this.canvasW}x{this.canvasH}_{DateTime.UtcNow:yyyyMMdd-HHmmss}.{ext}";
+                $"vf_{this.Character?.Slug ?? "character"}_pose{this.poseIndex}_{this.canvasConfig.ActualWidth}x{this.canvasConfig.ActualHeight}_{DateTime.UtcNow:yyyyMMdd-HHmmss}";
 
-            // Trigger automatic download using eval
-            var downloadScript =
-                $@"
-                (function(url, fileName) {{
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = fileName;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    
-                    // Clean up the object URL to prevent memory leaks
-                    setTimeout(() => URL.revokeObjectURL(url), 1000);
-                }})('{url}', '{fileName}');
-            ";
-
-            await this.JSRuntime.InvokeVoidAsync("eval", downloadScript);
+            await this.canvasManager!.RenderAndExportAsync(
+                this.JSRuntime,
+                this.canvasConfig.ActualWidth,
+                this.canvasConfig.ActualHeight,
+                fileName,
+                this.RenderExportCanvas
+            );
         }
         finally
         {
             this.isExporting = false;
             this.StateHasChanged();
+        }
+    }
+
+    private void RenderExportCanvas(ICanvas exportCanvas)
+    {
+        var ctx = exportCanvas.RenderContext;
+
+        // Clear with background color using extension
+        exportCanvas.Clear(this.bgHex);
+
+        // Background using helper extension
+        if (this.backgroundType != "solid")
+        {
+            var bgRef = this.BackgroundPatterns.FirstOrDefault(x => this.backgroundType == x.Name);
+            var bgImageRef = this.BackgroundRefs[bgRef.Index];
+
+            if (bgImageRef.Id != null)
+            {
+                ctx.DrawBackgroundImageCover(
+                    bgImageRef,
+                    bgRef.Width,
+                    bgRef.Height,
+                    this.canvasConfig.ActualWidth,
+                    this.canvasConfig.ActualHeight
+                );
+            }
+        }
+
+        // Character sprite using helper extension
+        if (
+            this.ImageRefs.Count > 0
+            && this.poseIndex >= 0
+            && this.poseIndex < this.ImageRefs.Count
+        )
+        {
+            var img = this.ImageRefs[this.poseIndex];
+
+            if (img is { Id: not null })
+            {
+                var (aspectRatio, scaledWidth, scaledHeight) =
+                    this.GetExportDimensions() ?? (1f, this.charSizePx, this.charSizePx);
+
+                var centerX = this.canvasConfig.ActualWidth / 2f + this.offsetX;
+                var centerY = this.canvasConfig.ActualHeight / 2f + this.offsetY;
+                var rotation = this.rotationDeg * MathF.PI / 180.0f;
+
+                ctx.DrawImageCentered(
+                    img,
+                    centerX,
+                    centerY,
+                    scaledWidth,
+                    scaledHeight,
+                    rotation,
+                    this.flipped
+                );
+            }
+        }
+
+        // Text using helper extension
+        if (!string.IsNullOrWhiteSpace(this.text))
+        {
+            var shadow = this.textShadow ? TextShadow.DropShadow() : null;
+            var font = $"{this.textSize}px {availableFonts[this.textFontFamily]}";
+            var x = this.canvasConfig.ActualWidth / 2f + this.textX;
+            var y = this.canvasConfig.ActualHeight / 2f + this.textY;
+
+            ctx.DrawStyledText(
+                this.text,
+                x,
+                y,
+                font,
+                this.textHex,
+                this.textAlign,
+                TextBaseline.Middle,
+                shadow
+            );
         }
     }
 
@@ -704,6 +730,59 @@ public partial class Home
         }
 
         // Calculate scaled dimensions maintaining aspect ratio
+        var originalWidth = (float)imageData.Width;
+        var originalHeight = (float)imageData.Height;
+        var aspectRatio = originalWidth / originalHeight;
+
+        float scaledWidth,
+            scaledHeight;
+
+        if (aspectRatio > 1) // Width is greater than height
+        {
+            scaledWidth = this.charSizePx * this.canvasConfig.Scale;
+            scaledHeight = (this.charSizePx * this.canvasConfig.Scale) / aspectRatio;
+        }
+        else // Height is greater than or equal to width
+        {
+            scaledHeight = this.charSizePx * this.canvasConfig.Scale;
+            scaledWidth = (this.charSizePx * this.canvasConfig.Scale) * aspectRatio;
+        }
+
+        return (aspectRatio, scaledWidth, scaledHeight);
+    }
+
+    private (float aspectRation, float width, float height)? GetExportDimensions()
+    {
+        if (this.Character is not Series2Token character)
+        {
+            return null;
+        }
+
+        var imageData = this.poseIndex switch
+        {
+            0 => character.ClassicPoseImage,
+            1 => character.CompetingPoseImage,
+            2 => character.EvolvingPoseImage,
+            3 => character.ManifestingPoseImage,
+            4 => character.RestingPoseImage,
+            5 => character.StrategizingPoseImage,
+            6 => character.DiamondImage,
+            7 => character.EmeraldImage,
+            8 => character.LavaImage,
+            9 => character.GoldImage,
+            10 => character.HologramImage,
+            11 => character.MangaImage,
+            12 => character.BubbleGumImage,
+            13 => character.TitleImageNoLogo,
+            _ => null,
+        };
+
+        if (imageData is null)
+        {
+            return null;
+        }
+
+        // Calculate dimensions at full resolution for export
         var originalWidth = (float)imageData.Width;
         var originalHeight = (float)imageData.Height;
         var aspectRatio = originalWidth / originalHeight;

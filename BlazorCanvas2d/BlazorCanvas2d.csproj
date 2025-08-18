@@ -10,7 +10,7 @@
     <Product>BlazorCanvas2d SDK</Product>
     <PackageId>BlazorCanvas2d</PackageId>
     <Version>$(GITHUB_REF_NAME.TrimStart('v'))</Version>
-    <Description></Description>
+    <Description>High-performance HTML5 Canvas API wrapper for Blazor applications with comprehensive 2D rendering capabilities, extension methods, and helper utilities.</Description>
     <PackageProjectUrl>https://github.com/Zettersten/BlazorCanvas2d</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Zettersten/BlazorCanvas2d</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
