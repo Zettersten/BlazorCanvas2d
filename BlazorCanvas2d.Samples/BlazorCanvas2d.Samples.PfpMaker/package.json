@@ -1,0 +1,12 @@
+{
+  "name": "blazorcanvas2d-pfpmaker-sample",
+  "version": "1.0.0",
+  "description": "PfpMaker sample for BlazorCanvas2d with Tailwind CSS",
+  "scripts": {
+    "build-css": "tailwindcss -i ./wwwroot/app.css -o ./wwwroot/tailwind.css --watch",
+    "build-css-prod": "tailwindcss -i ./wwwroot/app.css -o ./wwwroot/tailwind.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

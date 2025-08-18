@@ -1,11 +1,13 @@
 ﻿using System.Collections.Concurrent;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 
 namespace BlazorCanvas2d.Interop;
 
 internal sealed class MarshalReferencePool
 {
-    private readonly ConcurrentDictionary<int, MarshalReference> _cache = new();
+    private readonly ConcurrentDictionary<int, MarshalReference> _browserCache = new();
+    private readonly ConcurrentDictionary<string, MarshalReference> _remoteCache = new();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public MarshalReference Next(ElementReference elementReference) =>
@@ -16,7 +18,7 @@ internal sealed class MarshalReferencePool
                 nameof(elementReference)
             ),
             var id when int.TryParse(id, out var hash) => this.GetOrCreateReference(hash, true),
-            var id => this.GetOrCreateReference(id.GetHashCode(), true),
+            var id => this.GetOrCreateReference(id, true),
         };
 
     public MarshalReference Next(params object[] methodParams) =>
@@ -55,7 +57,16 @@ internal sealed class MarshalReferencePool
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private MarshalReference GetOrCreateReference(int keyHash, bool isElementReference) =>
-        this._cache.GetOrAdd(
+        this._browserCache.GetOrAdd(
+            keyHash,
+            static (hash, isElement) =>
+                new MarshalReference(hash.ToString(CultureInfo.InvariantCulture), isElement),
+            isElementReference
+        );
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private MarshalReference GetOrCreateReference(string keyHash, bool isElementReference) =>
+        this._remoteCache.GetOrAdd(
             keyHash,
             static (hash, isElement) => new MarshalReference(hash, isElement),
             isElementReference

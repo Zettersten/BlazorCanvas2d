@@ -16,7 +16,8 @@ import type {
     BatchOperation,
     EventExtractors,
     EventMethodMap,
-    CreateBlazorexAPI
+    CreateBlazorexAPI,
+    Guid
 } from './blazorCanvas2d.types.js';
 
 const DEFAULT_CANVAS_OPTIONS: CanvasContextOptions = {
@@ -48,7 +49,7 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
      * Marshal references for complex canvas objects (gradients, patterns, etc.)
      * Maps C# MarshalReference.Id to the actual JavaScript canvas object
      */
-    const marshalledObjects = new Map<number, unknown>();
+    const marshalledObjects = new Map<number | string, unknown>();
 
     /** ImageData objects indexed by auto-generated ID */
     const imageDataCache = new Map<number, ImageData>();
@@ -125,6 +126,14 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
     // ========================================
 
     /**
+     * Validates if a string is in valid GUID format
+     */
+    const isValidGuid = (value: string): boolean => {
+        const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        return guidRegex.test(value);
+    };
+
+    /**
      * Determines if a parameter is a MarshalReference from C#
      */
     const isMarshalReference = (param: unknown): param is MarshalReference => {
@@ -132,7 +141,8 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
             param !== null &&
             'id' in param &&
             'isElementRef' in param &&
-            typeof (param as any).id === 'number';
+            (typeof (param as any).id === "number" ||
+                (typeof (param as any).id === "string" && isValidGuid((param as any).id)));
     };
 
     /**
@@ -187,8 +197,7 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
      * Retrieves a cached DOM element by Blazor ElementRef
      */
     const getCachedElement = (elementRef: MarshalReference): Element | undefined => {
-        const cacheKey = `_bl_${elementRef.id}`;
-
+        const cacheKey = `_bl_${(elementRef as any).id}`;
         let element = elementCache.get(cacheKey);
         if (!element) {
             element = document.querySelector(`[${cacheKey}]`) ?? undefined;
@@ -348,6 +357,7 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
         // Special handling for properties that may reference gradients/patterns
         if (MARSHAL_REFERENCE_PROPERTIES.includes(propertyName as any)) {
             // Check if this is a marshal reference ID
+
             if (typeof unwrappedValue === 'number') {
                 const resolvedValue = marshalledObjects.get(unwrappedValue) ?? unwrappedValue;
                 typedContext[propertyName] = resolvedValue;
@@ -674,7 +684,7 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
         canvasId: string,
         type: string = 'image/png',
         quality?: number
-    ): Promise<{ data: Uint8Array; type: string; size: number, objectUrl: string } | null> => {
+    ): Promise<{ objectUrl: string } | null> => {
         const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
 
         if (!canvas) {
@@ -683,31 +693,36 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
         }
 
         return new Promise((resolve) => {
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    console.warn(`Failed to create blob from canvas '${canvasId}'`);
-                    resolve(null);
-                    return;
-                }
+            try {
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        console.warn(`Failed to create blob from canvas '${canvasId}'`);
+                        resolve(null);
+                        return;
+                    }
 
-                try {
-                    // Convert blob to ArrayBuffer then to Uint8Array for C# interop
-                    const arrayBuffer = await blob.arrayBuffer();
-                    const uint8Array = new Uint8Array(arrayBuffer);
-                    const objectUrl = URL.createObjectURL(blob)
+                    try {
+                        const objectUrl = URL.createObjectURL(blob);
 
-                    // Return object that matches C# Blob constructor expectations
-                    resolve({
-                        data: uint8Array,
-                        type: blob.type,
-                        size: blob.size,
-                        objectUrl: objectUrl
-                    });
-                } catch (error) {
-                    console.error(`Error converting canvas '${canvasId}' to blob:`, error);
-                    resolve(null);
+                        const result = {
+                            objectUrl: objectUrl
+                        };
+
+                        console.log(result);
+                        resolve(result);
+                    } catch (error) {
+                        console.error(`Error converting canvas '${canvasId}' to blob:`, error);
+                        resolve(null);
+                    }
+                }, type, quality);
+            } catch (e) {
+                if (e instanceof Error && e.message.includes('tainted')) {
+                    console.error(`Canvas '${canvasId}' is tainted. Ensure all images are loaded with crossOrigin="anonymous"`);
+                } else {
+                    console.error(`Error in toBlob for canvas '${canvasId}':`, e);
                 }
-            }, type, quality);
+                resolve(null);
+            }
         });
     };
 

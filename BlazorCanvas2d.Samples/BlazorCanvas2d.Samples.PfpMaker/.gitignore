@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Generated CSS
+wwwroot/css/tailwind.css
+
+# Blazor build artifacts
+bin/
+obj/
+*.user
+
+# IDE files
+.vs/
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db

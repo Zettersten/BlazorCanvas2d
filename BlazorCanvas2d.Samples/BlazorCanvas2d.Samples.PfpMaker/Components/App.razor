@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BlazorCanvas2d PfpMaker - Create Your Profile Picture</title>
+    <meta name="description" content="Create amazing profile pictures using BlazorCanvas2d and VeeFriends characters" />
+    <base href="/" />
+    <link rel="stylesheet" href="@Assets["tailwind.css"]" />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="preload" href="_framework/blazor.webassembly.js" as="script" />
+    <ImportMap />
+    <HeadOutlet />
+</head>
+
+<body>
+    <Routes @rendermode="InteractiveServer" />
+    <script src="_framework/blazor.web.js"></script>
+</body>
+</html>

@@ -48,8 +48,8 @@
     <SupportedPlatform Include="browser" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.6" />
-    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="5.8.3">
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.8" />
+    <PackageReference Include="Microsoft.TypeScript.MSBuild" Version="5.9.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeInPackageReference>false</IncludeInPackageReference>
     </PackageReference>

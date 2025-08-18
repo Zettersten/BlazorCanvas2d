@@ -8,7 +8,7 @@ internal sealed record CanvasPattern : CanvasProperty<int>, ICanvasPattern
     private readonly MarshalReference _marshalReference;
 
     internal CanvasPattern(RenderContext2D context, MarshalReference marshalReference)
-        : base(marshalReference.Id)
+        : base(int.Parse(marshalReference.Id))
     {
         this._context = context;
         this._marshalReference = marshalReference;

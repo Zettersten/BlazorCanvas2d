@@ -1,0 +1,452 @@
+@page "/"
+
+<PageTitle>Home</PageTitle>
+
+@if (this.Character is not null)
+{
+    <!-- Embeddable Editor Interface -->
+    <div class="flex flex-col lg:flex-row w-full">
+        <!-- Canvas Area -->
+        <div class="flex-1 p-2 sm:p-4 flex flex-col items-center justify-center">
+            <div class="relative w-full max-w-full">
+                <!-- Canvas Container -->
+                <div class="relative bg-white rounded border border-slate-500 overflow-hidden"
+                     style="width: fit-content; max-width: 100%; max-height: 80vh; margin: 0 auto;">
+                    <CanvasManager @ref="canvasManager" />
+                    <!-- Canvas Info Overlay -->
+                    <div class="absolute bottom-1 right-1 bg-black/70 text-white text-xs px-1 py-0.5 rounded">
+                        @canvasW × @canvasH
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Controls Below Preview -->
+            <div class="mt-3 w-full max-w-md">
+                <div class="bg-slate-600 rounded-lg p-3">
+                    <!-- Canvas Size Selector and Action Buttons -->
+                    <div class="flex gap-3 items-end">
+                        <!-- Canvas Size Selector - Takes available space -->
+                        <div class="flex-1">
+                            <select class="w-full bg-slate-700 text-white border border-slate-600 rounded px-3 py-2 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    @onchange="OnPresetChanged">
+                                @foreach (var kv in presets)
+                                {
+                                    <option value="@kv.Key" selected="@(kv.Key == presetKey)">
+                                        @kv.Key (@kv.Value.w × @kv.Value.h)
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Action Buttons - Fixed width -->
+                        <div class="flex gap-2">
+                            <!-- Mobile Tools Toggle -->
+                            <button class="lg:hidden bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-2"
+                                    @onclick="ToggleToolsPanel">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                                </svg>
+                                <span>Tools</span>
+                            </button>
+
+                            <!-- Export Button -->
+                            <button class="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-2"
+                                    @onclick="() => ExportAsync()"
+                                    disabled="@isExporting">
+                                @if (isExporting)
+                                {
+                                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>Exporting...</span>
+                                }
+                                else
+                                {
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span>Export PNG</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tools Panel -->
+        <div class="@GetToolsPanelClasses()">
+            <!-- Scrollable Tools Area -->
+            <div class="flex-1 overflow-y-auto scrollbar-hidden">
+                <div class="p-2 sm:p-3 space-y-2 sm:space-y-3">
+
+                    <!-- Canvas Settings Panel -->
+                    <div class="border border-slate-700 bg-slate-600 rounded-lg">
+                        <div class="px-3 py-2 border-b border-slate-700">
+                            <h3 class="text-white text-xs font-medium">Canvas</h3>
+                        </div>
+                        <div class="p-2 sm:p-3 space-y-2 sm:space-y-3">
+                            <!-- Background Selection -->
+                            <div>
+                                <label class="block text-slate-300 text-xs font-medium mb-1">Background</label>
+                                <div class="flex items-center gap-2">
+                                    <select class="flex-1 bg-slate-700 text-white border border-slate-600 rounded px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                            @onchange="OnBackgroundChanged">
+                                        <option value="solid" selected="@(backgroundType == "solid")">Solid Color</option>
+                                        @foreach (var bg in BackgroundPatterns)
+                                        {
+                                            <option value="@bg.Name" selected="@(backgroundType == bg.Name)">@bg.Name</option>
+                                        }
+                                    </select>
+                                    @if (backgroundType == "solid")
+                                    {
+                                        <input type="color"
+                                               class="w-8 h-6 rounded border border-slate-600 bg-slate-700 cursor-pointer"
+                                               value="@bgHex"
+                                               @oninput="OnBgColorChanged" />
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Character Settings Panel -->
+                    <div class="border border-slate-700 bg-slate-600 rounded-lg">
+                        <div class="px-3 py-2 border-b border-slate-700">
+                            <h3 class="text-white text-xs font-medium">Character</h3>
+                        </div>
+                        <div class="p-2 sm:p-3 space-y-2 sm:space-y-3">
+                            <!-- Pose Selector -->
+                            <div>
+                                <label class="block text-slate-300 text-xs font-medium mb-1">Pose</label>
+                                <select class="w-full bg-slate-700 text-white border border-slate-600 rounded px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                        @onchange="OnPoseChanged">
+                                    @foreach (var item in ImagePoses)
+                                    {
+                                        <option value="@item.Index">@item.Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Size Control -->
+                            <div>
+                                <label class="block text-slate-300 text-xs font-medium mb-1">Size</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="range"
+                                           min="64" max="1600" step="1"
+                                           value="@charSizePx"
+                                           @oninput="OnCharSizeChanged"
+                                           class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
+                                    <span class="text-slate-400 text-xs w-10 text-right">@charSizePx</span>
+                                </div>
+                            </div>
+
+                            <!-- Rotation Control -->
+                            <div>
+                                <label class="block text-slate-300 text-xs font-medium mb-1">Rotation</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="range"
+                                           min="-180" max="180" step="1"
+                                           value="@rotationDeg"
+                                           @oninput="OnRotationChanged"
+                                           class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
+                                    <span class="text-slate-400 text-xs w-10 text-right">@rotationDeg°</span>
+                                </div>
+                            </div>
+
+                            <!-- Position Controls -->
+                            <div>
+                                <label class="block text-slate-300 text-xs font-medium mb-1">Position</label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-slate-400 text-xs w-4">X</span>
+                                        <input type="range"
+                                               min="-2000" max="2000" step="1"
+                                               value="@offsetX"
+                                               @oninput="OnXChanged"
+                                               class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
+                                        <span class="text-slate-400 text-xs w-10 text-right">@offsetX</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-slate-400 text-xs w-4">Y</span>
+                                        <input type="range"
+                                               min="-2000" max="2000" step="1"
+                                               value="@offsetY"
+                                               @oninput="OnYChanged"
+                                               class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
+                                        <span class="text-slate-400 text-xs w-10 text-right">@offsetY</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Flip Button -->
+                            <button class="w-full bg-slate-700 hover:bg-slate-600 text-white text-xs py-1.5 px-2 rounded border border-slate-600 transition-colors"
+                                    @onclick="Flip">
+                                @(flipped ? "Unflip" : "Flip Horizontal")
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Text Settings Panel -->
+                    <div class="border border-slate-700 bg-slate-600 rounded-lg">
+                        <div class="px-3 py-2 border-b border-slate-700">
+                            <h3 class="text-white text-xs font-medium">Text</h3>
+                        </div>
+                        <div class="p-2 sm:p-3 space-y-2 sm:space-y-3">
+                            <!-- Text Input -->
+                            <div>
+                                <label class="block text-slate-300 text-xs font-medium mb-1">Content</label>
+                                <textarea rows="2"
+                                          class="w-full bg-slate-700 text-white border border-slate-600 rounded px-2 py-1 text-xs resize-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                          placeholder="Enter your text..."
+                                          @oninput="OnTextChanged">@text</textarea>
+                            </div>
+
+                            <!-- Font Selection -->
+                            <div>
+                                <label class="block text-slate-300 text-xs font-medium mb-1">Font Family</label>
+                                <select class="w-full bg-slate-700 text-white border border-slate-600 rounded px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                        @onchange="OnTextFontChanged">
+                                    @foreach (var font in availableFonts)
+                                    {
+                                        <option value="@font.Key" selected="@(textFontFamily == font.Key)">@font.Key</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <!-- Text Size -->
+                            <div>
+                                <label class="block text-slate-300 text-xs font-medium mb-1">Size</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="range"
+                                           min="12" max="240" step="1"
+                                           value="@textSize"
+                                           @oninput="OnTextSizeChanged"
+                                           class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
+                                    <span class="text-slate-400 text-xs w-10 text-right">@textSize</span>
+                                </div>
+                            </div>
+
+                            <!-- Text Position -->
+                            <div>
+                                <label class="block text-slate-300 text-xs font-medium mb-1">Position</label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-slate-400 text-xs w-4">X</span>
+                                        <input type="range"
+                                               min="-2000" max="2000" step="1"
+                                               value="@textX"
+                                               @oninput="OnTextXChanged"
+                                               class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
+                                        <span class="text-slate-400 text-xs w-10 text-right">@textX</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-slate-400 text-xs w-4">Y</span>
+                                        <input type="range"
+                                               min="-2000" max="2000" step="1"
+                                               value="@textY"
+                                               @oninput="OnTextYChanged"
+                                               class="flex-1 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
+                                        <span class="text-slate-400 text-xs w-10 text-right">@textY</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Text Styling -->
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1">
+                                    <label class="block text-slate-300 text-xs font-medium mb-1">Alignment</label>
+                                    <select class="w-full bg-slate-700 text-white border border-slate-600 rounded px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                            @onchange="OnTextAlignChanged">
+                                        <option value="center" selected="@(textAlign == TextAlign.Center)">Center</option>
+                                        <option value="left" selected="@(textAlign == TextAlign.Left)">Left</option>
+                                        <option value="right" selected="@(textAlign == TextAlign.Right)">Right</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-slate-300 text-xs font-medium mb-1">Color</label>
+                                    <input type="color"
+                                           class="w-8 h-6 rounded border border-slate-600 bg-slate-700 cursor-pointer"
+                                           value="@textHex"
+                                           @oninput="OnTextColorChanged" />
+                                </div>
+                            </div>
+
+                            <!-- Text Shadow Toggle -->
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox"
+                                       class="w-3 h-3 text-blue-600 bg-slate-700 border-slate-600 rounded focus:ring-blue-500 focus:ring-2"
+                                       checked="@textShadow"
+                                       @onchange="OnTextShadowToggle" />
+                                <span class="text-slate-300 text-xs">Drop Shadow</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Tools Overlay Backdrop -->
+        @if (showToolsPanel)
+        {
+            <div class="lg:hidden fixed inset-0 bg-black/50 z-40" @onclick="ToggleToolsPanel"></div>
+        }
+
+        <!-- Hidden Images for Canvas Rendering -->
+        <div class="hidden">
+            @if (this.Character is Series2Token character)
+            {
+                <img @ref="classicPoseImage"
+                     crossorigin="anonymous"
+                     src="@character.ClassicPoseImage.ImageUrl"
+                     height="@character.ClassicPoseImage.Height"
+                     width="@character.ClassicPoseImage.Width" />
+
+                <img @ref="competingPoseImage"
+                     crossorigin="anonymous"
+                     src="@character.CompetingPoseImage.ImageUrl"
+                     height="@character.CompetingPoseImage.Height"
+                     width="@character.CompetingPoseImage.Width" />
+
+                <img @ref="evolvingPoseImage"
+                     crossorigin="anonymous"
+                     src="@character.EvolvingPoseImage.ImageUrl"
+                     height="@character.EvolvingPoseImage.Height"
+                     width="@character.EvolvingPoseImage.Width" />
+
+                <img @ref="manifestingPoseImage"
+                     crossorigin="anonymous"
+                     src="@character.ManifestingPoseImage.ImageUrl"
+                     height="@character.ManifestingPoseImage.Height"
+                     width="@character.ManifestingPoseImage.Width" />
+
+                <img @ref="restingPoseImage"
+                     crossorigin="anonymous"
+                     src="@character.RestingPoseImage.ImageUrl"
+                     height="@character.RestingPoseImage.Height"
+                     width="@character.RestingPoseImage.Width" />
+
+                <img @ref="strategizingPoseImage"
+                     crossorigin="anonymous"
+                     src="@character.StrategizingPoseImage.ImageUrl"
+                     height="@character.StrategizingPoseImage.Height"
+                     width="@character.StrategizingPoseImage.Width" />
+
+                <img @ref="diamondImage"
+                     crossorigin="anonymous"
+                     src="@character.DiamondImage.ImageUrl"
+                     height="@character.DiamondImage.Height"
+                     width="@character.DiamondImage.Width" />
+
+                <img @ref="emeraldImage"
+                     crossorigin="anonymous"
+                     src="@character.EmeraldImage.ImageUrl"
+                     height="@character.EmeraldImage.Height"
+                     width="@character.EmeraldImage.Width" />
+
+                <img @ref="lavaImage"
+                     crossorigin="anonymous"
+                     src="@character.LavaImage.ImageUrl"
+                     height="@character.LavaImage.Height"
+                     width="@character.LavaImage.Width" />
+
+                <img @ref="goldImage"
+                     crossorigin="anonymous"
+                     src="@character.GoldImage.ImageUrl"
+                     height="@character.GoldImage.Height"
+                     width="@character.GoldImage.Width" />
+
+                <img @ref="hologramImage"
+                     crossorigin="anonymous"
+                     src="@character.HologramImage.ImageUrl"
+                     height="@character.HologramImage.Height"
+                     width="@character.HologramImage.Width" />
+
+                @if (character.MangaImage != null)
+                {
+                    <img @ref="mangaImage"
+                         crossorigin="anonymous"
+                         src="@character.MangaImage.ImageUrl"
+                         height="@character.MangaImage.Height"
+                         width="@character.MangaImage.Width" />
+                }
+
+                <img @ref="bubbleGumImage"
+                     crossorigin="anonymous"
+                     src="@character.BubbleGumImage.ImageUrl"
+                     height="@character.BubbleGumImage.Height"
+                     width="@character.BubbleGumImage.Width" />
+
+                @if (character.TitleImageNoLogo != null)
+                {
+                    <img @ref="titleImageNoLogo"
+                         crossorigin="anonymous"
+                         src="@character.TitleImageNoLogo.ImageUrl"
+                         height="@character.TitleImageNoLogo.Height"
+                         width="@character.TitleImageNoLogo.Width" />
+                }
+            }
+
+            <img @ref="patternImage1"
+                 crossorigin="anonymous"
+                 src="https://media.veefriends.com/image/upload/q_auto,f_auto/v1755538034/veefriends/v3/assets/pfp-maker/pattern1"
+                 height="2084"
+                 width="6250" />
+
+            <img @ref="patternImage2"
+                 crossorigin="anonymous"
+                 src="https://media.veefriends.com/image/upload/q_auto,f_auto/v1755538034/veefriends/v3/assets/pfp-maker/pattern2"
+                 height="2084"
+                 width="6250" />
+
+            <img @ref="patternImage3"
+                 crossorigin="anonymous"
+                 src="https://media.veefriends.com/image/upload/q_auto,f_auto/v1755538034/veefriends/v3/assets/pfp-maker/pattern3"
+                 height="6250"
+                 width="2084" />
+
+            <img @ref="patternImage4"
+                 crossorigin="anonymous"
+                 src="https://media.veefriends.com/image/upload/q_auto,f_auto/v1755538034/veefriends/v3/assets/pfp-maker/pattern4"
+                 height="2868"
+                 width="1320" />
+
+            <img @ref="patternImage5"
+                 crossorigin="anonymous"
+                 src="https://media.veefriends.com/image/upload/q_auto,f_auto/v1755538034/veefriends/v3/assets/pfp-maker/pattern5"
+                 height="2868"
+                 width="1320" />
+
+            <img @ref="patternImage6"
+                 crossorigin="anonymous"
+                 src="https://media.veefriends.com/image/upload/q_auto,f_auto/v1755538034/veefriends/v3/assets/pfp-maker/pattern6"
+                 height="2868"
+                 width="1320" />
+
+            <img @ref="patternImage7"
+                 crossorigin="anonymous"
+                 src="https://media.veefriends.com/image/upload/q_auto,f_auto/v1755538034/veefriends/v3/assets/pfp-maker/pattern7"
+                 height="2868"
+                 width="1320" />
+
+            <img @ref="patternImage8"
+                 crossorigin="anonymous"
+                 src="https://media.veefriends.com/image/upload/q_auto,f_auto/v1755538034/veefriends/v3/assets/pfp-maker/pattern8"
+                 height="2868"
+                 width="1320" />
+
+            <img @ref="patternImage9"
+                 crossorigin="anonymous"
+                 src="https://media.veefriends.com/image/upload/q_auto,f_auto/v1755538034/veefriends/v3/assets/pfp-maker/pattern9"
+                 height="2084"
+                 width="6250" />
+
+            <img @ref="patternImage10"
+                 crossorigin="anonymous"
+                 src="https://media.veefriends.com/image/upload/q_auto,f_auto/v1755538034/veefriends/v3/assets/pfp-maker/pattern10"
+                 height="2084"
+                 width="6250" />
+        </div>
+    </div>
+}

@@ -121,7 +121,7 @@ public interface ICanvas : IAsyncDisposable
     /// <exception cref="ArgumentOutOfRangeException">
     /// Thrown when <paramref name="quality"/> is not between 0.0 and 1.0.
     /// </exception>
-    ValueTask<Blob> ToBlob(string type = "image/png", double? quality = null);
+    ValueTask<BlobData> ToBlob(string type = "image/png", double? quality = null);
 
     /// <summary>
     /// Asynchronously converts the canvas content to a base64-encoded data URL.

@@ -58,12 +58,17 @@ export const createBlazorexAPI = () => {
         touchstart: 'MouseDown',
         touchend: 'MouseUp'
     };
+    const isValidGuid = (value) => {
+        const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        return guidRegex.test(value);
+    };
     const isMarshalReference = (param) => {
         return typeof param === 'object' &&
             param !== null &&
             'id' in param &&
             'isElementRef' in param &&
-            typeof param.id === 'number';
+            (typeof param.id === "number" ||
+                (typeof param.id === "string" && isValidGuid(param.id)));
     };
     const createCanvasEventHandler = (blazorInstance, eventType) => {
         const methodName = blazorMethodNames[eventType];
@@ -392,28 +397,36 @@ export const createBlazorexAPI = () => {
             return null;
         }
         return new Promise((resolve) => {
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    console.warn(`Failed to create blob from canvas '${canvasId}'`);
-                    resolve(null);
-                    return;
+            try {
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        console.warn(`Failed to create blob from canvas '${canvasId}'`);
+                        resolve(null);
+                        return;
+                    }
+                    try {
+                        const objectUrl = URL.createObjectURL(blob);
+                        const result = {
+                            objectUrl: objectUrl
+                        };
+                        console.log(result);
+                        resolve(result);
+                    }
+                    catch (error) {
+                        console.error(`Error converting canvas '${canvasId}' to blob:`, error);
+                        resolve(null);
+                    }
+                }, type, quality);
+            }
+            catch (e) {
+                if (e instanceof Error && e.message.includes('tainted')) {
+                    console.error(`Canvas '${canvasId}' is tainted. Ensure all images are loaded with crossOrigin="anonymous"`);
                 }
-                try {
-                    const arrayBuffer = await blob.arrayBuffer();
-                    const uint8Array = new Uint8Array(arrayBuffer);
-                    const objectUrl = URL.createObjectURL(blob);
-                    resolve({
-                        data: uint8Array,
-                        type: blob.type,
-                        size: blob.size,
-                        objectUrl: objectUrl
-                    });
+                else {
+                    console.error(`Error in toBlob for canvas '${canvasId}':`, e);
                 }
-                catch (error) {
-                    console.error(`Error converting canvas '${canvasId}' to blob:`, error);
-                    resolve(null);
-                }
-            }, type, quality);
+                resolve(null);
+            }
         });
     };
     const globalEventOptions = { passive: true };

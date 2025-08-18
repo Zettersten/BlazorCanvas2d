@@ -212,15 +212,27 @@ public abstract class CanvasBase : ComponentBase, ICanvas
     /// Converts canvas to blob.
     /// Docs: https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob
     /// </summary>
-    public async ValueTask<Blob> ToBlob(string type = "image/png", double? quality = null)
+    public async ValueTask<BlobData> ToBlob(string type = "image/png", double? quality = null)
     {
         ArgumentNullException.ThrowIfNull(this._blazorexAPI);
 
-        var blobData = quality.HasValue
-            ? await this._blazorexAPI.InvokeAsync<BlobData>("toBlob", this.Id, type, quality.Value)
-            : await this._blazorexAPI.InvokeAsync<BlobData>("toBlob", this.Id, type);
+        try
+        {
+            var blobData = quality.HasValue
+                ? await this._blazorexAPI.InvokeAsync<BlobData>(
+                    "toBlob",
+                    this.Id,
+                    type,
+                    quality.Value
+                )
+                : await this._blazorexAPI.InvokeAsync<BlobData>("toBlob", this.Id, type);
 
-        return blobData.ToBlob();
+            return blobData;
+        }
+        catch (Exception ex)
+        {
+            throw;
+        }
     }
 
     /// <summary>
@@ -229,8 +241,8 @@ public abstract class CanvasBase : ComponentBase, ICanvas
     /// </summary>
     public async ValueTask<string> ToDataUrl(string type = "image/png", double? quality = null)
     {
-        using var blob = await this.ToBlob(type, quality);
-        return blob.ToDataUrl();
+        var blob = await this.ToBlob(type, quality);
+        return blob.ObjectUrl;
     }
 
     /// <summary>
@@ -242,7 +254,7 @@ public abstract class CanvasBase : ComponentBase, ICanvas
         double? quality = null
     )
     {
-        using var blob = await this.ToBlob(type, quality);
+        var blob = await this.ToBlob(type, quality);
         return blob.ObjectUrl;
     }
 
@@ -254,16 +266,20 @@ public abstract class CanvasBase : ComponentBase, ICanvas
     {
         if (!this._disposed)
         {
-            if (this._blazorexAPI != null)
+            try
             {
-                await this._blazorexAPI.InvokeVoidAsync("removeContext", this.Id);
-                await this._blazorexAPI.DisposeAsync();
-            }
+                if (this._blazorexAPI != null)
+                {
+                    await this._blazorexAPI.InvokeVoidAsync("removeContext", this.Id);
+                    await this._blazorexAPI.DisposeAsync();
+                }
 
-            if (this._module != null)
-            {
-                await this._module.DisposeAsync();
+                if (this._module != null)
+                {
+                    await this._module.DisposeAsync();
+                }
             }
+            catch (JSDisconnectedException) { }
 
             this._disposed = true;
 

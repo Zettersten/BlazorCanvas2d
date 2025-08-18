@@ -16,7 +16,7 @@ export type ContextInfo = {
 
 // C# MarshalReference equivalent - matches MarshalReference.cs structure
 export type MarshalReference = {
-    readonly id: number;
+    readonly id: number | Guid;
     readonly isElementRef: boolean;
     readonly classInitializer?: string;
 };
@@ -25,10 +25,14 @@ export type MarshalReference = {
 export type PropertyValueWrapper = {
     readonly value: unknown;
 } | {
-    readonly id: number;
+    readonly id: number | Guid;
 } | {
     readonly result: unknown;
 };
+
+// GUID type with strict pattern matching for .NET GUID compatibility
+export type Guid = string;
+
 
 // Direct property values that can come from Blazor
 export type PropertyValue = string | number | Date | PropertyValueWrapper;
@@ -104,7 +108,7 @@ export type BlazorexAPI = {
     readonly directCall: (ctxId: string, methodName: string, jParams?: unknown[]) => unknown;
     readonly removeContext: (ctxId: string) => boolean;
     readonly resizeCanvas: (ctxId: string, width: number, height: number) => void;
-    readonly toBlob: (ctxId: string, type: string, quality?: number) => Promise<{ data: Uint8Array; type: string; size: number, objectUrl: string } | null>;
+    readonly toBlob: (ctxId: string, type: string, quality?: number) => Promise<{ objectUrl: string } | null >;
 };
 
 export type CreateBlazorexAPI = () => BlazorexAPI; 
