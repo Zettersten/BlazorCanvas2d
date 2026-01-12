@@ -1,0 +1,15 @@
+{
+  "microsoft.net.sdk.tvos": {
+    "workload": {
+      "alias": [ "tvos" ],
+      "version": "26.0.10970-net10-rc.2"
+    },
+    "xcode": {
+      "version": "[26.0,)",
+      "recommendedVersion": "26.0"
+    },
+    "sdk": {
+      "version": "26.0"
+    }
+  }
+}
