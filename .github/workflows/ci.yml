@@ -29,5 +29,5 @@ jobs:
         run: dotnet test --configuration Release --no-build
 
       - name: CSharpier (check)
-        run: dotnet csharpier --check .
+        run: dotnet csharpier check .
 
