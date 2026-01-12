@@ -9,7 +9,17 @@
     <Company>BlazorCanvas2d</Company>
     <Product>BlazorCanvas2d SDK</Product>
     <PackageId>BlazorCanvas2d</PackageId>
-    <Version>$(GITHUB_REF_NAME.TrimStart('v'))</Version>
+    <!--
+      Package versioning:
+      - On tag builds: use the tag name (optionally prefixed with 'v').
+      - On PR/branch builds (e.g. refs/pull/*/merge where GITHUB_REF_NAME can contain '/'):
+        use a valid SemVer pre-release so `dotnet restore` doesn't fail.
+    -->
+    <Version Condition="'$(GITHUB_REF_NAME)' != '' and $([System.String]::Copy('$(GITHUB_REF_NAME)').Contains('/')) == 'false'">
+      $(GITHUB_REF_NAME.TrimStart('v'))
+    </Version>
+    <Version Condition="'$(Version)' == '' and '$(GITHUB_RUN_NUMBER)' != ''">0.0.0-ci.$(GITHUB_RUN_NUMBER)</Version>
+    <Version Condition="'$(Version)' == ''">0.0.0-local</Version>
     <Description>High-performance HTML5 Canvas API wrapper for Blazor applications with comprehensive 2D rendering capabilities, extension methods, and helper utilities.</Description>
     <PackageProjectUrl>https://github.com/Zettersten/BlazorCanvas2d</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Zettersten/BlazorCanvas2d</RepositoryUrl>
