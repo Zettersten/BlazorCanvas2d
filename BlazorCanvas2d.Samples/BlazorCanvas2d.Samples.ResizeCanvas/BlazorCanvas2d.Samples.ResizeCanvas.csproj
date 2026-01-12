@@ -9,7 +9,8 @@
     <PackageReference
       Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer"
       Version="10.0.1"
-      PrivateAssets="all" />
+      PrivateAssets="all"
+    />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\BlazorCanvas2d\BlazorCanvas2d.csproj" />

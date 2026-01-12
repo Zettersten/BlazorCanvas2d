@@ -50,4 +50,3 @@ public sealed class ResponsiveCanvasHelperTests
         Assert.True(cfg2.Scale is > 0f and < 1f);
     }
 }
-

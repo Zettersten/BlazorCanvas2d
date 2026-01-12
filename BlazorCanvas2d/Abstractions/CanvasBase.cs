@@ -233,7 +233,12 @@ public abstract class CanvasBase : ComponentBase, ICanvas
         ArgumentNullException.ThrowIfNull(this._blazorexAPI);
 
         var url = quality.HasValue
-            ? await this._blazorexAPI.InvokeAsync<string?>("toDataUrl", this.Id, type, quality.Value)
+            ? await this._blazorexAPI.InvokeAsync<string?>(
+                "toDataUrl",
+                this.Id,
+                type,
+                quality.Value
+            )
             : await this._blazorexAPI.InvokeAsync<string?>("toDataUrl", this.Id, type);
 
         return url ?? string.Empty;

@@ -21,19 +21,22 @@ public static class ICanvasExtensions
         IJSRuntime jsRuntime,
         string fileName,
         string format = "png",
-        double? quality = null)
+        double? quality = null
+    )
     {
         var mimeType = $"image/{format}";
         var fileExtension = format switch
         {
             "jpeg" => "jpg",
-            _ => format
+            _ => format,
         };
 
         var url = await canvas.CreateObjectURL(mimeType, quality);
         var fullFileName = $"{fileName}.{fileExtension}";
 
-        await jsRuntime.InvokeVoidAsync("eval", $$"""
+        await jsRuntime.InvokeVoidAsync(
+            "eval",
+            $$"""
             (function(url, fileName) {
                 const a = document.createElement('a');
                 a.href = url;
@@ -45,7 +48,8 @@ public static class ICanvasExtensions
                 // Clean up the object URL to prevent memory leaks
                 setTimeout(() => URL.revokeObjectURL(url), 1000);
             })('{{url}}', '{{fullFileName}}');
-            """);
+            """
+        );
     }
 
     /// <summary>
@@ -61,22 +65,26 @@ public static class ICanvasExtensions
         this CanvasManager canvasManager,
         int width,
         int height,
-        Action<ICanvas> renderAction)
+        Action<ICanvas> renderAction
+    )
     {
         var tempCanvasName = $"temp-canvas-{DateTime.UtcNow.Ticks}";
         ICanvas? tempCanvas = null;
 
-        canvasManager.CreateCanvas(tempCanvasName, new CanvasCreationOptions
-        {
-            Hidden = true,
-            Width = width,
-            Height = height,
-            OnCanvasReady = canvas =>
+        canvasManager.CreateCanvas(
+            tempCanvasName,
+            new CanvasCreationOptions
             {
-                tempCanvas = canvas;
-                renderAction(canvas);
+                Hidden = true,
+                Width = width,
+                Height = height,
+                OnCanvasReady = canvas =>
+                {
+                    tempCanvas = canvas;
+                    renderAction(canvas);
+                },
             }
-        });
+        );
 
         // Wait for canvas creation with timeout
         var attempts = 0;
@@ -102,7 +110,7 @@ public static class ICanvasExtensions
     public static void Clear(this ICanvas canvas, string? color = null)
     {
         var ctx = canvas.RenderContext;
-        
+
         if (color != null)
         {
             ctx.Save();

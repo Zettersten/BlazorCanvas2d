@@ -17,7 +17,8 @@ public static class ResponsiveCanvasHelper
         int targetWidth,
         int targetHeight,
         int maxDisplayWidth = 640,
-        int maxDisplayHeight = 480)
+        int maxDisplayHeight = 480
+    )
     {
         var aspectRatio = (float)targetWidth / targetHeight;
 
@@ -27,7 +28,8 @@ public static class ResponsiveCanvasHelper
             return (targetWidth, targetHeight, 1.0f);
         }
 
-        int displayWidth, displayHeight;
+        int displayWidth,
+            displayHeight;
 
         // Scale down proportionally to fit within limits
         if (aspectRatio > 1) // Width is larger
@@ -74,7 +76,8 @@ public static class ResponsiveCanvasHelper
         int DisplayWidth,
         int DisplayHeight,
         float Scale,
-        bool IsScaled)
+        bool IsScaled
+    )
     {
         /// <summary>
         /// Creates a responsive canvas configuration for the specified target dimensions.
@@ -88,17 +91,26 @@ public static class ResponsiveCanvasHelper
             int targetWidth,
             int targetHeight,
             int maxDisplayWidth = 640,
-            int maxDisplayHeight = 480)
+            int maxDisplayHeight = 480
+        )
         {
             var (displayWidth, displayHeight, scale) = CalculateDisplayDimensions(
-                targetWidth, targetHeight, maxDisplayWidth, maxDisplayHeight);
+                targetWidth,
+                targetHeight,
+                maxDisplayWidth,
+                maxDisplayHeight
+            );
 
             var isScaled = displayWidth != targetWidth || displayHeight != targetHeight;
 
             return new ResponsiveCanvasConfig(
-                targetWidth, targetHeight,
-                displayWidth, displayHeight,
-                scale, isScaled);
+                targetWidth,
+                targetHeight,
+                displayWidth,
+                displayHeight,
+                scale,
+                isScaled
+            );
         }
 
         /// <summary>
@@ -133,7 +145,8 @@ public static class ResponsiveCanvasExtensions
         ResponsiveCanvasHelper.ResponsiveCanvasConfig config,
         Action<ICanvas> onCanvasReady,
         Action<float>? onFrameReady = null,
-        Action<CanvasCreationOptions>? additionalOptions = null)
+        Action<CanvasCreationOptions>? additionalOptions = null
+    )
     {
         var options = new CanvasCreationOptions
         {
@@ -141,7 +154,7 @@ public static class ResponsiveCanvasExtensions
             Width = config.DisplayWidth,
             Height = config.DisplayHeight,
             OnCanvasReady = onCanvasReady,
-            OnFrameReady = onFrameReady
+            OnFrameReady = onFrameReady,
         };
 
         additionalOptions?.Invoke(options);

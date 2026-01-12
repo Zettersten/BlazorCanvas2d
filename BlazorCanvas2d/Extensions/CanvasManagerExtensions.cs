@@ -27,13 +27,18 @@ public static class CanvasManagerExtensions
         string fileName,
         Action<ICanvas> renderAction,
         string format = "png",
-        double? quality = null)
+        double? quality = null
+    )
     {
         ICanvas? exportCanvas = null;
-        
+
         try
         {
-            exportCanvas = await canvasManager.CreateTemporaryCanvasAsync(width, height, renderAction);
+            exportCanvas = await canvasManager.CreateTemporaryCanvasAsync(
+                width,
+                height,
+                renderAction
+            );
             await exportCanvas.ExportAndDownloadAsync(jsRuntime, fileName, format, quality);
         }
         finally
@@ -67,7 +72,8 @@ public static class CanvasManagerExtensions
         string fileName,
         Action<ICanvas, float>? additionalRenderAction = null,
         string format = "png",
-        double? quality = null)
+        double? quality = null
+    )
     {
         var scaleX = (float)exportWidth / sourceCanvas.Width;
         var scaleY = (float)exportHeight / sourceCanvas.Height;
@@ -80,19 +86,20 @@ public static class CanvasManagerExtensions
             exportCanvas =>
             {
                 var ctx = exportCanvas.RenderContext;
-                
+
                 // Copy the source canvas content scaled to the export dimensions
                 ctx.Save();
                 ctx.Scale(scaleX, scaleY);
-                
+
                 // Note: This would need additional implementation to copy from source canvas
                 // For now, we'll call the additional render action if provided
                 additionalRenderAction?.Invoke(exportCanvas, Math.Min(scaleX, scaleY));
-                
+
                 ctx.Restore();
             },
             format,
-            quality);
+            quality
+        );
     }
 
     /// <summary>
@@ -114,13 +121,14 @@ public static class CanvasManagerExtensions
         string baseFileName,
         Action<ICanvas, float> renderAction,
         string format = "png",
-        double? quality = null)
+        double? quality = null
+    )
     {
         var tasks = sizes.Select(async size =>
         {
             var scale = Math.Min((float)size.width / 500f, (float)size.height / 500f); // Assume 500x500 base
             var fileName = $"{baseFileName}_{size.suffix}_{size.width}x{size.height}";
-            
+
             await canvasManager.RenderAndExportAsync(
                 jsRuntime,
                 size.width,
@@ -128,7 +136,8 @@ public static class CanvasManagerExtensions
                 fileName,
                 canvas => renderAction(canvas, scale),
                 format,
-                quality);
+                quality
+            );
         });
 
         await Task.WhenAll(tasks);

@@ -26,21 +26,22 @@ public static class IRenderContextExtensions
         float maxWidth,
         float maxHeight,
         float rotation = 0f,
-        bool flipHorizontal = false)
+        bool flipHorizontal = false
+    )
     {
         ctx.Save();
-        
+
         ctx.Translate(centerX, centerY);
-        
+
         if (rotation != 0f)
             ctx.Rotate(rotation);
-            
+
         if (flipHorizontal)
             ctx.Scale(-1f, 1f);
 
         // Draw image centered at origin
         ctx.DrawImage(imageRef, -maxWidth / 2f, -maxHeight / 2f, maxWidth, maxHeight);
-        
+
         ctx.Restore();
     }
 
@@ -65,10 +66,12 @@ public static class IRenderContextExtensions
         float centerY,
         float targetSize,
         float rotation = 0f,
-        bool flipHorizontal = false)
+        bool flipHorizontal = false
+    )
     {
         var aspectRatio = originalWidth / originalHeight;
-        float scaledWidth, scaledHeight;
+        float scaledWidth,
+            scaledHeight;
 
         if (aspectRatio > 1) // Width is greater than height
         {
@@ -81,7 +84,15 @@ public static class IRenderContextExtensions
             scaledWidth = targetSize * aspectRatio;
         }
 
-        ctx.DrawImageCentered(imageRef, centerX, centerY, scaledWidth, scaledHeight, rotation, flipHorizontal);
+        ctx.DrawImageCentered(
+            imageRef,
+            centerX,
+            centerY,
+            scaledWidth,
+            scaledHeight,
+            rotation,
+            flipHorizontal
+        );
     }
 
     /// <summary>
@@ -107,16 +118,17 @@ public static class IRenderContextExtensions
         TextAlign? textAlign = null,
         TextBaseline? textBaseline = null,
         TextShadow? shadow = null,
-        float lineHeightMultiplier = 1.2f)
+        float lineHeightMultiplier = 1.2f
+    )
     {
         ctx.Save();
-        
+
         ctx.Font = font;
         ctx.FillStyle = fillColor;
-        
+
         if (textAlign != null)
             ctx.TextAlign = textAlign;
-            
+
         if (textBaseline != null)
             ctx.TextBaseline = textBaseline;
 
@@ -146,7 +158,7 @@ public static class IRenderContextExtensions
                 ctx.FillText(lines[i], x, startY + i * lineHeight);
             }
         }
-        
+
         ctx.Restore();
     }
 
@@ -165,13 +177,16 @@ public static class IRenderContextExtensions
         float imageWidth,
         float imageHeight,
         float canvasWidth,
-        float canvasHeight)
+        float canvasHeight
+    )
     {
         var canvasAspectRatio = canvasWidth / canvasHeight;
         var imageAspectRatio = imageWidth / imageHeight;
 
-        float scaledWidth, scaledHeight;
-        float offsetX = 0, offsetY = 0;
+        float scaledWidth,
+            scaledHeight;
+        float offsetX = 0,
+            offsetY = 0;
 
         // Scale to cover the canvas (like CSS background-size: cover)
         if (imageAspectRatio > canvasAspectRatio)
@@ -212,7 +227,11 @@ public static class IRenderContextExtensions
     /// <param name="ctx">The rendering context.</param>
     /// <param name="transform">The transformation to apply.</param>
     /// <param name="action">The drawing operations to perform.</param>
-    public static void WithTransform(this IRenderContext ctx, Action<IRenderContext> transform, Action action)
+    public static void WithTransform(
+        this IRenderContext ctx,
+        Action<IRenderContext> transform,
+        Action action
+    )
     {
         ctx.Save();
         transform(ctx);
