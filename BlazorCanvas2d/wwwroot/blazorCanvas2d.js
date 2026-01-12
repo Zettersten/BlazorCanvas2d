@@ -6,7 +6,7 @@ const DEFAULT_CANVAS_OPTIONS = {
 };
 const MARSHAL_REFERENCE_PROPERTIES = ['fillStyle', 'strokeStyle'];
 const PRINTABLE_KEYS = ['Enter', 'Tab', 'Backspace', 'Delete'];
-export const createBlazorexAPI = () => {
+const createBlazorexAPIImpl = () => {
     const canvasContexts = new Map();
     const elementCache = new Map();
     const marshalledObjects = new Map();
@@ -23,6 +23,7 @@ export const createBlazorexAPI = () => {
     let keyboardEventContexts = [];
     let mouseEventContexts = [];
     let resizeEventContexts = [];
+    let animationLoopStarted = false;
     const eventDataExtractors = {
         wheel: (event) => ({
             deltaX: event.deltaX,
@@ -63,12 +64,16 @@ export const createBlazorexAPI = () => {
         return guidRegex.test(value);
     };
     const isMarshalReference = (param) => {
-        return typeof param === 'object' &&
-            param !== null &&
-            'id' in param &&
-            'isElementRef' in param &&
-            (typeof param.id === "number" ||
-                (typeof param.id === "string" && isValidGuid(param.id)));
+        if (typeof param !== 'object' || param === null)
+            return false;
+        if (!('id' in param) || !('isElementRef' in param))
+            return false;
+        const id = param.id;
+        if (typeof id === 'number')
+            return true;
+        if (typeof id !== 'string')
+            return false;
+        return isValidGuid(id) || /^\d+$/.test(id);
     };
     const createCanvasEventHandler = (blazorInstance, eventType) => {
         const methodName = blazorMethodNames[eventType];
@@ -154,37 +159,35 @@ export const createBlazorexAPI = () => {
         }
     };
     const invokeContextMethod = (context, methodName, parameters) => {
-        const params = parameters ? [...parameters] : [];
         const typedContext = context;
-        if (params.length === 0) {
+        if (!parameters?.length) {
             return typedContext[methodName]();
         }
-        const firstParam = params[0];
-        if (isMarshalReference(firstParam)) {
-            const marshalRef = firstParam;
-            if (!marshalRef.isElementRef) {
-                params.splice(0, 1);
-                const existingObject = marshalledObjects.get(marshalRef.id);
-                if (existingObject?.[methodName]) {
-                    if (marshalRef.classInitializer) {
-                        const Constructor = globalThis[marshalRef.classInitializer];
-                        existingObject[methodName](new Constructor(...params));
-                    }
-                    else {
-                        existingObject[methodName](...params);
-                    }
-                    return marshalRef.id;
+        const firstParam = parameters[0];
+        if (!isMarshalReference(firstParam)) {
+            return typedContext[methodName](...parameters);
+        }
+        const marshalRef = firstParam;
+        if (!marshalRef.isElementRef) {
+            const args = parameters.slice(1);
+            const existingObject = marshalledObjects.get(marshalRef.id);
+            if (existingObject?.[methodName]) {
+                if (marshalRef.classInitializer) {
+                    const Constructor = globalThis[marshalRef.classInitializer];
+                    existingObject[methodName](new Constructor(...args));
                 }
-                const result = typedContext[methodName](...params);
-                marshalledObjects.set(marshalRef.id, result);
+                else {
+                    existingObject[methodName](...args);
+                }
                 return marshalRef.id;
             }
-            params[0] = getCachedElement(marshalRef);
+            const result = typedContext[methodName](...args);
+            marshalledObjects.set(marshalRef.id, result);
+            return marshalRef.id;
         }
-        const result = typedContext[methodName](...params);
-        if (isMarshalReference(firstParam) && !firstParam.isElementRef) {
-            marshalledObjects.set(firstParam.id, result);
-        }
+        const element = getCachedElement(marshalRef);
+        const rest = parameters.slice(1);
+        const result = typedContext[methodName](element, ...rest);
         return result;
     };
     const setContextProperty = (context, propertyName, value) => {
@@ -310,11 +313,16 @@ export const createBlazorexAPI = () => {
         }
         canvasContexts.set(canvasId, {
             id: canvasId,
+            canvas,
             context: renderingContext,
             managedInstance: blazorInstance,
-            contextOptions
+            contextOptions,
+            eventHandlers
         });
-        requestAnimationFrame(onFrameUpdate);
+        if (!animationLoopStarted) {
+            animationLoopStarted = true;
+            requestAnimationFrame(onFrameUpdate);
+        }
     };
     const onFrameUpdate = (timestamp) => {
         if (cachedContexts.length !== canvasContexts.size) {
@@ -355,14 +363,15 @@ export const createBlazorexAPI = () => {
             return;
         }
         const { context } = contextInfo;
-        operations.forEach(({ methodName, args, isProperty }) => {
-            if (isProperty) {
-                setContextProperty(context, methodName, args);
+        for (let i = 0; i < operations.length; i++) {
+            const op = operations[i];
+            if (op.isProperty) {
+                setContextProperty(context, op.methodName, op.args);
             }
             else {
-                invokeContextMethod(context, methodName, args);
+                invokeContextMethod(context, op.methodName, op.args);
             }
-        });
+        }
     };
     const directCall = (canvasId, methodName, parameters) => {
         const contextInfo = canvasContexts.get(canvasId);
@@ -373,6 +382,14 @@ export const createBlazorexAPI = () => {
         return invokeContextMethod(contextInfo.context, methodName, parameters);
     };
     const removeContext = (canvasId) => {
+        const contextInfo = canvasContexts.get(canvasId);
+        if (!contextInfo)
+            return false;
+        const { canvas, eventHandlers } = contextInfo;
+        const eventOptions = { passive: false };
+        Object.entries(eventHandlers).forEach(([eventType, handler]) => {
+            canvas.removeEventListener(eventType, handler, eventOptions);
+        });
         return canvasContexts.delete(canvasId);
     };
     const resizeCanvas = (canvasId, width, height) => {
@@ -406,11 +423,7 @@ export const createBlazorexAPI = () => {
                     }
                     try {
                         const objectUrl = URL.createObjectURL(blob);
-                        const result = {
-                            objectUrl: objectUrl
-                        };
-                        console.log(result);
-                        resolve(result);
+                        resolve({ objectUrl });
                     }
                     catch (error) {
                         console.error(`Error converting canvas '${canvasId}' to blob:`, error);
@@ -429,6 +442,31 @@ export const createBlazorexAPI = () => {
             }
         });
     };
+    const toDataUrl = (canvasId, type = 'image/png', quality) => {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.warn(`Canvas '${canvasId}' not found for toDataUrl operation`);
+            return null;
+        }
+        try {
+            return quality == null ? canvas.toDataURL(type) : canvas.toDataURL(type, quality);
+        }
+        catch (e) {
+            console.error(`Error in toDataUrl for canvas '${canvasId}':`, e);
+            return null;
+        }
+    };
+    const downloadUrl = (url, fileName, shouldRevoke = false) => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        if (shouldRevoke) {
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+    };
     const globalEventOptions = { passive: true };
     addEventListener('keyup', handleGlobalKeyUp, globalEventOptions);
     addEventListener('keydown', handleGlobalKeyDown, globalEventOptions);
@@ -444,7 +482,12 @@ export const createBlazorexAPI = () => {
         directCall,
         removeContext,
         resizeCanvas,
-        toBlob
+        toBlob,
+        toDataUrl,
+        downloadUrl
     });
 };
+let sharedApi = null;
+export const createBlazorexAPI = () => (sharedApi ?? (sharedApi = createBlazorexAPIImpl()));
+export const downloadUrl = (url, fileName, shouldRevoke = false) => createBlazorexAPI().downloadUrl(url, fileName, shouldRevoke);
 export default createBlazorexAPI;

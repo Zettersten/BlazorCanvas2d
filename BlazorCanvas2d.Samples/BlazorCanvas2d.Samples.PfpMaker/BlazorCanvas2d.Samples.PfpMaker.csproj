@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="VeeFriends.Characters" Version="5.0.79" />
+    <PackageReference Include="VeeFriends.Characters" Version="5.0.109" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\BlazorCanvas2d\BlazorCanvas2d.csproj" />

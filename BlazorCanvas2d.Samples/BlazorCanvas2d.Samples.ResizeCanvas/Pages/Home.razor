@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 
 <PageTitle>Home</PageTitle>
 
@@ -10,9 +10,9 @@
 
 @code
 {
-    CanvasManager _canvasManager;
+    private CanvasManager? _canvasManager;
     ElementReference _spritesheet;
-    IRenderContext _context;
+    private IRenderContext? _context;
 
     int _width = 800;
     int _height = 600;
@@ -36,7 +36,7 @@
         if (!firstRender)
             return;
 
-        _canvasManager.CreateCanvas("main", new CanvasCreationOptions()
+        _canvasManager?.CreateCanvas("main", new CanvasCreationOptions()
         {
             Hidden = false,
             Width = _width,
@@ -64,25 +64,28 @@
 
     }
 
-    private void Resize()
+    private static readonly (int width, int height)[] SizePresets =
+    [
+        (1920, 1080),
+        (1080, 1920),
+        (800, 600),
+        (600, 800),
+        (400, 300),
+        (300, 400),
+    ];
+
+    private async Task Resize()
     {
-        var sizePresents = new List<(int width, int height)> 
+        if (_context is null)
         {
-            (1920, 1080),
-            (1080, 1920),
-            (800, 600),
-            (600, 800),
-            (400, 300),
-            (300, 400),
-        };
+            return;
+        }
 
-        var getRandomSize = () => sizePresents[Random.Shared.Next(sizePresents.Count)];
-
-        var (width, height) = getRandomSize();
+        var (width, height) = SizePresets[Random.Shared.Next(SizePresets.Length)];
 
         _width = width;
         _height = height;
-        _context.Resize(_width, _height);
+        await _context.ResizeAsync(_width, _height);
     }
 
     private void Update(float timeStamp)
@@ -103,6 +106,11 @@
 
     private void Render()
     {        
+        if (_context is null)
+        {
+            return;
+        }
+
         _context.ClearRect(0, 0, _width, _height);
         
         // fills the background with a dark blue color

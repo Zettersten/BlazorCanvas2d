@@ -1,4 +1,4 @@
-﻿namespace BlazorCanvas2d.Renderer;
+namespace BlazorCanvas2d.Renderer;
 
 internal sealed partial class RenderContext2D : IRenderContext
 {
@@ -166,7 +166,7 @@ internal sealed partial class RenderContext2D : IRenderContext
         set
         {
             this._shadowOffsetX = value;
-            this.SetProperty("shadowOffsetX ", value);
+            this.SetProperty("shadowOffsetX", value);
         }
     }
 
@@ -178,7 +178,7 @@ internal sealed partial class RenderContext2D : IRenderContext
         set
         {
             this._shadowOffsetY = value;
-            this.SetProperty("shadowOffsetY ", value);
+            this.SetProperty("shadowOffsetY", value);
         }
     }
 

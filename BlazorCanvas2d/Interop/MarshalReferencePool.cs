@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 
@@ -45,6 +45,19 @@ internal sealed class MarshalReferencePool
             ),
             _ => this.GetOrCreateReference(CreateKeyFromLargeParams(methodParams), false),
         };
+
+    // Hot-path overloads (avoid params object[] allocations + boxing for common cases)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public MarshalReference Next(float a, float b, float c) =>
+        this.GetOrCreateReference(HashCode.Combine(a, b, c), false);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public MarshalReference Next(float a, float b, float c, float d) =>
+        this.GetOrCreateReference(HashCode.Combine(a, b, c, d), false);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public MarshalReference Next(float a, float b, float c, float d, float e, float f) =>
+        this.GetOrCreateReference(HashCode.Combine(a, b, c, d, e, f), false);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static int CreateKeyFromLargeParams(ReadOnlySpan<object> key)

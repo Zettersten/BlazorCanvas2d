@@ -197,7 +197,7 @@ public static class IRenderContextExtensions
     /// </summary>
     /// <param name="ctx">The rendering context.</param>
     /// <param name="scale">The scaling factor to apply.</param>
-    /// <param name="drawAction">The drawing operations to perform with scaling applied.</param>
+    /// <param name="action">The drawing operations to perform with scaling applied.</param>
     public static void WithScale(this IRenderContext ctx, float scale, Action action)
     {
         ctx.Save();
@@ -211,7 +211,7 @@ public static class IRenderContextExtensions
     /// </summary>
     /// <param name="ctx">The rendering context.</param>
     /// <param name="transform">The transformation to apply.</param>
-    /// <param name="drawAction">The drawing operations to perform.</param>
+    /// <param name="action">The drawing operations to perform.</param>
     public static void WithTransform(this IRenderContext ctx, Action<IRenderContext> transform, Action action)
     {
         ctx.Save();

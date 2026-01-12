@@ -34,7 +34,7 @@ const PRINTABLE_KEYS = ['Enter', 'Tab', 'Backspace', 'Delete'];
  * Creates a new BlazorCanvas2d API instance with isolated state
  * @returns A frozen BlazorexAPI instance
  */
-export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
+const createBlazorexAPIImpl = (): BlazorexAPI => {
     // ========================================
     // PRIVATE STATE MANAGEMENT
     // ========================================
@@ -73,6 +73,9 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
     let keyboardEventContexts: ContextInfo[] = [];
     let mouseEventContexts: ContextInfo[] = [];
     let resizeEventContexts: ContextInfo[] = [];
+
+    // Single animation loop for all contexts
+    let animationLoopStarted = false;
 
     // ========================================
     // EVENT EXTRACTION & MAPPING
@@ -137,12 +140,17 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
      * Determines if a parameter is a MarshalReference from C#
      */
     const isMarshalReference = (param: unknown): param is MarshalReference => {
-        return typeof param === 'object' &&
-            param !== null &&
-            'id' in param &&
-            'isElementRef' in param &&
-            (typeof (param as any).id === "number" ||
-                (typeof (param as any).id === "string" && isValidGuid((param as any).id)));
+        if (typeof param !== 'object' || param === null) return false;
+        if (!('id' in param) || !('isElementRef' in param)) return false;
+
+        const id = (param as any).id as unknown;
+        if (typeof id === 'number') return true;
+        if (typeof id !== 'string') return false;
+
+        // MarshalReference.Id is either:
+        // - a GUID string (Blazor element references), or
+        // - a numeric string (internal marshalled objects: gradients, patterns, etc.)
+        return isValidGuid(id) || /^\d+$/.test(id);
     };
 
     /**
@@ -293,52 +301,54 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
         methodName: string,
         parameters?: unknown[]
     ): unknown => {
-        const params = parameters ? [...parameters] : [];
         const typedContext = context as unknown as Record<string, Function>;
 
         // Handle zero-parameter methods
-        if (params.length === 0) {
+        if (!parameters?.length) {
             return typedContext[methodName]();
         }
 
-        const firstParam = params[0];
+        const firstParam = parameters[0];
+
+        // Hot path: no marshal reference => no need to copy/modify args
+        if (!isMarshalReference(firstParam)) {
+            return typedContext[methodName](...parameters);
+        }
 
         // Handle C# MarshalReference objects
-        if (isMarshalReference(firstParam)) {
-            const marshalRef = firstParam as MarshalReference;
+        const marshalRef = firstParam as MarshalReference;
 
-            if (!marshalRef.isElementRef) {
-                // This is a marshal object reference (gradient, pattern, etc.)
-                params.splice(0, 1);
+        if (!marshalRef.isElementRef) {
+            // This is a marshal object reference (gradient, pattern, etc.)
+            const args = parameters.slice(1);
+            const existingObject = marshalledObjects.get(marshalRef.id) as
+                | Record<string, Function>
+                | undefined;
 
-                const existingObject = marshalledObjects.get(marshalRef.id) as Record<string, Function> | undefined;
-
-                if (existingObject?.[methodName]) {
-                    if (marshalRef.classInitializer) {
-                        const Constructor = (globalThis as any)[marshalRef.classInitializer];
-                        existingObject[methodName](new Constructor(...params));
-                    } else {
-                        existingObject[methodName](...params);
-                    }
-
-                    return marshalRef.id;
+            if (existingObject?.[methodName]) {
+                if (marshalRef.classInitializer) {
+                    const Constructor = (globalThis as any)[marshalRef.classInitializer];
+                    existingObject[methodName](new Constructor(...args));
+                } else {
+                    existingObject[methodName](...args);
                 }
 
-                // Create new marshal object and store it
-                const result = typedContext[methodName](...params);
-                marshalledObjects.set(marshalRef.id, result);
                 return marshalRef.id;
             }
 
-            params[0] = getCachedElement(marshalRef);
+            // Create new marshal object and store it
+            const result = typedContext[methodName](...args);
+            marshalledObjects.set(marshalRef.id, result);
+            return marshalRef.id;
         }
 
-        const result = typedContext[methodName](...params);
+        // Element reference: resolve DOM element and forward the rest of args
+        const element = getCachedElement(marshalRef);
+        const rest = parameters.slice(1);
+        const result = typedContext[methodName](element, ...rest);
 
         // If this created a marshal object, store it
-        if (isMarshalReference(firstParam) && !firstParam.isElementRef) {
-            marshalledObjects.set(firstParam.id, result);
-        }
+        // (not applicable for element refs)
 
         return result;
     };
@@ -538,15 +548,20 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
             return;
         }
 
-        // Store context info
+        // Store context info (includes handlers for cleanup)
         canvasContexts.set(canvasId, {
             id: canvasId,
+            canvas,
             context: renderingContext,
             managedInstance: blazorInstance,
-            contextOptions
+            contextOptions,
+            eventHandlers
         });
 
-        requestAnimationFrame(onFrameUpdate);
+        if (!animationLoopStarted) {
+            animationLoopStarted = true;
+            requestAnimationFrame(onFrameUpdate);
+        }
     };
 
     /**
@@ -619,14 +634,15 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
 
         const { context } = contextInfo;
 
-        // Process all operations in sequence
-        operations.forEach(({ methodName, args, isProperty }) => {
-            if (isProperty) {
-                setContextProperty(context, methodName, args as PropertyValue);
+        // Process all operations in sequence (hot path: avoid callback allocations)
+        for (let i = 0; i < operations.length; i++) {
+            const op = operations[i]!;
+            if (op.isProperty) {
+                setContextProperty(context, op.methodName, op.args as PropertyValue);
             } else {
-                invokeContextMethod(context, methodName, args as unknown[]);
+                invokeContextMethod(context, op.methodName, op.args as unknown[]);
             }
-        });
+        }
     };
 
     /**
@@ -650,6 +666,17 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
      * Removes a canvas context and cleans up resources
      */
     const removeContext = (canvasId: string): boolean => {
+        const contextInfo = canvasContexts.get(canvasId);
+        if (!contextInfo) return false;
+
+        const { canvas, eventHandlers } = contextInfo;
+        const eventOptions: AddEventListenerOptions = { passive: false };
+        (Object.entries(eventHandlers) as Array<[string, EventHandler]>).forEach(
+            ([eventType, handler]) => {
+                canvas.removeEventListener(eventType, handler, eventOptions);
+            }
+        );
+
         return canvasContexts.delete(canvasId);
     };
 
@@ -704,12 +731,7 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
                     try {
                         const objectUrl = URL.createObjectURL(blob);
 
-                        const result = {
-                            objectUrl: objectUrl
-                        };
-
-                        console.log(result);
-                        resolve(result);
+                        resolve({ objectUrl });
                     } catch (error) {
                         console.error(`Error converting canvas '${canvasId}' to blob:`, error);
                         resolve(null);
@@ -724,6 +746,46 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
                 resolve(null);
             }
         });
+    };
+
+    /**
+     * Converts a canvas to a data URL string.
+     */
+    const toDataUrl = (
+        canvasId: string,
+        type: string = 'image/png',
+        quality?: number
+    ): string | null => {
+        const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
+        if (!canvas) {
+            console.warn(`Canvas '${canvasId}' not found for toDataUrl operation`);
+            return null;
+        }
+
+        try {
+            // PNG ignores quality. JPEG/WebP accept quality in [0..1].
+            return quality == null ? canvas.toDataURL(type) : canvas.toDataURL(type, quality);
+        } catch (e) {
+            console.error(`Error in toDataUrl for canvas '${canvasId}':`, e);
+            return null;
+        }
+    };
+
+    /**
+     * Triggers a browser download for a URL.
+     * If `shouldRevoke` is true, the URL is revoked after a short delay.
+     */
+    const downloadUrl = (url: string, fileName: string, shouldRevoke: boolean = false): void => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        if (shouldRevoke) {
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
     };
 
     // ========================================
@@ -752,8 +814,21 @@ export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI => {
         directCall,
         removeContext,
         resizeCanvas,
-        toBlob
+        toBlob,
+        toDataUrl,
+        downloadUrl
     });
 };
+
+let sharedApi: BlazorexAPI | null = null;
+export const createBlazorexAPI: CreateBlazorexAPI = (): BlazorexAPI =>
+    (sharedApi ??= createBlazorexAPIImpl());
+
+/**
+ * Convenience module export for triggering downloads without using eval.
+ * Uses the shared BlazorexAPI instance.
+ */
+export const downloadUrl = (url: string, fileName: string, shouldRevoke: boolean = false): void =>
+    createBlazorexAPI().downloadUrl(url, fileName, shouldRevoke);
 
 export default createBlazorexAPI;

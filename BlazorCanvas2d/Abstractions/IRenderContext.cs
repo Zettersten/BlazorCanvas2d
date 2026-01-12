@@ -1,4 +1,4 @@
-﻿namespace BlazorCanvas2d;
+namespace BlazorCanvas2d;
 
 /// <summary>
 /// Defines a 2D rendering context for drawing shapes, text, images, and paths, similar to the HTML5 Canvas API.
@@ -97,6 +97,12 @@ public interface IRenderContext
     /// Puts the image data onto the canvas at the specified coordinates.
     /// </summary>
     void PutImageData(int imageDataId, byte[] data, double x, double y);
+
+    /// <summary>
+    /// Asynchronously puts the image data onto the canvas at the specified coordinates.
+    /// Prefer this over <see cref="PutImageData"/> so callers can observe failures.
+    /// </summary>
+    ValueTask PutImageDataAsync(int imageDataId, byte[] data, double x, double y);
 
     /// <summary>
     /// Starts a new path by resetting the current path.
@@ -264,6 +270,12 @@ public interface IRenderContext
     /// Resizes the canvas to the specified width and height.
     /// </summary>
     void Resize(int width, int height);
+
+    /// <summary>
+    /// Asynchronously resizes the canvas to the specified width and height.
+    /// Prefer this over <see cref="Resize"/> so callers can observe failures.
+    /// </summary>
+    ValueTask ResizeAsync(int width, int height);
 
     /// <summary>
     /// Resets the rendering context to its default state, allowing it to be reused for drawing something else without having to explicitly reset all the properties.
