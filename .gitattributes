@@ -3,6 +3,21 @@
 ###############################################################################
 * text=auto
 
+# Normalize common source files to LF for formatter stability
+*.cs         text eol=lf
+*.razor      text eol=lf
+*.csproj     text eol=lf
+*.sln        text eol=lf
+*.props      text eol=lf
+*.targets    text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
+*.md         text eol=lf
+*.json       text eol=lf
+*.js         text eol=lf
+*.ts         text eol=lf
+*.d.ts       text eol=lf
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #
