@@ -1,0 +1,76 @@
+name: Deploy demo (GitHub Pages)
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "BlazorCanvas2d/**"
+      - "BlazorCanvas2d.Samples/**"
+      - ".github/workflows/deploy-demo.yml"
+      - ".github/workflows/ci.yml"
+      - "BlazorCanvas2d.sln"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish SimpleCanvas (Release)
+        run: dotnet publish "BlazorCanvas2d.Samples/BlazorCanvas2d.Samples.SimpleCanvas/BlazorCanvas2d.Samples.SimpleCanvas.csproj" -c Release -o "artifacts/publish"
+
+      - name: Prepare GitHub Pages assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          WWWROOT="artifacts/publish/wwwroot"
+          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+          BASE_HREF="/${REPO_NAME}/"
+
+          # Blazor WASM needs correct base href when hosted from /<repo>/
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import re
+
+          wwwroot = pathlib.Path(os.environ["WWWROOT"])
+          base_href = os.environ["BASE_HREF"]
+          index = wwwroot / "index.html"
+          html = index.read_text(encoding="utf-8")
+          html2, n = re.subn(r'<base href="[^"]*"\s*/>', f'<base href="{base_href}" />', html, count=1)
+          if n != 1:
+              raise SystemExit("Expected exactly one <base href=\"...\" /> in index.html")
+          index.write_text(html2, encoding="utf-8")
+          (wwwroot / "404.html").write_text(html2, encoding="utf-8")
+          (wwwroot / ".nojekyll").write_text("", encoding="utf-8")
+          PY
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: artifacts/publish/wwwroot
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
