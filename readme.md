@@ -1,66 +1,46 @@
 ![BlazorCanvas2d Logo](https://raw.githubusercontent.com/Zettersten/BlazorCanvas2d/main/icon.png)
 
-# BlazorCanvas2d 🎮🎨
+## BlazorCanvas2d
 
 [![NuGet version](https://badge.fury.io/nu/BlazorCanvas2d.svg)](https://badge.fury.io/nu/BlazorCanvas2d)
 
-## Overview
+BlazorCanvas2d is a Blazor component library that wraps the browser Canvas 2D API with a C#-friendly surface and batched JS interop.
 
-BlazorCanvas2d is a high-performance HTML5 Canvas API wrapper for Blazor applications. It provides a comprehensive C# interface to the browser's 2D rendering capabilities, enabling developers to create rich graphics, interactive visualizations, and games directly within Blazor components.
+## Requirements
 
-The library is designed with performance in mind, featuring batch rendering operations and efficient JavaScript interop to minimize overhead.
+- **.NET 10**
+- **Blazor WebAssembly** (recommended for best perf)
 
-## Features
-
-- **Complete Canvas 2D API implementation** - Full access to shapes, paths, transforms, text, images, and more
-- **Event handling** - Support for mouse, touch, keyboard, and window resize events
-- **Multiple canvas management** - Create and control multiple canvases with the CanvasManager
-- **Performance optimizations** - Batched rendering operations and efficient memory usage
-- **Image export options** - Convert canvas content to blobs, data URLs, or object URLs
-- **Rendering configuration** - Fine-tune rendering behavior with options for alpha channels, color spaces, and more
-
-## Installation
-
-Add the BlazorCanvas2d NuGet package to your Blazor project:
+## Install
 
 ```bash
 dotnet add package BlazorCanvas2d
 ```
 
-Add the following using statement to your `_Imports.razor` file:
-
+In your `_Imports.razor`:
 
 ```csharp
 @using BlazorCanvas2d
 ```
 
-## Basic Usage
+## Basic usage
 
-### Single Canvas Component
-
-The simplest way to use BlazorCanvas2d is to include a Canvas component in your Razor page:
-
+### Single canvas
 
 ```csharp
 @page "/simple-canvas"
 
-<h1>Simple Canvas Example</h1>
-<Canvas Width="800" Height="600" OnCanvasReady="CanvasReadyHandler" />
+<Canvas Width="800" Height="600" OnCanvasReady="OnCanvasReady" />
 
-@code 
-{     
-    private async void CanvasReadyHandler(ICanvas canvas) 
-    { 
+@code {
+    private void OnCanvasReady(ICanvas canvas)
+    {
         var ctx = canvas.RenderContext;
-        
-        // Clear the canvas
+
         ctx.ClearRect(0, 0, canvas.Width, canvas.Height);
-    
-        // Draw a filled rectangle
         ctx.FillStyle = "blue";
         ctx.FillRect(50, 50, 200, 100);
-    
-        // Draw some text
+
         ctx.Font = "24px Arial";
         ctx.FillStyle = "white";
         ctx.FillText("Hello, BlazorCanvas2d!", 60, 100);
@@ -68,53 +48,32 @@ The simplest way to use BlazorCanvas2d is to include a Canvas component in your 
 }
 ```
 
-### Using CanvasManager for Multiple Canvases
+### Multiple canvases (`CanvasManager`)
 
-For more complex applications, you can use the `CanvasManager` component to create and manage multiple canvases:
+Best practice: create canvases once, after the component has rendered and the `@ref` is available.
 
 ```csharp
 @page "/multi-canvas"
 
-<h1>Multiple Canvas Example</h1>
-<CanvasManager @ref="CanvasManager" />
-<button @onclick="AddNewCanvas">Add New Canvas</button>
+<CanvasManager @ref="_manager" />
 
-@code 
-{ 
-    private CanvasManager CanvasManager { get; set; } = default!; 
-    private int canvasCount = 0;
+@code {
+    private CanvasManager? _manager;
+    private int _count;
 
-    protected override void OnInitialized()
+    protected override void OnAfterRender(bool firstRender)
     {
-        // Create an initial canvas
-        CreateNewCanvas();
-    }
+        if (!firstRender || _manager is null) return;
 
-    private void AddNewCanvas()
-    {
-        CreateNewCanvas();
-    }
-
-    private void CreateNewCanvas()
-    {
-        string canvasName = $"canvas{canvasCount++}";
-    
-        CanvasManager.CreateCanvas(canvasName, new CanvasCreationOptions
+        _manager.CreateCanvas($"canvas{_count++}", new CanvasCreationOptions
         {
             Width = 400,
             Height = 300,
             OnCanvasReady = canvas =>
             {
                 var ctx = canvas.RenderContext;
-            
-                // Draw something unique on each canvas
-                ctx.ClearRect(0, 0, canvas.Width, canvas.Height);
-                ctx.FillStyle = $"hsl({canvasCount * 30}, 70%, 60%)";
-                ctx.FillRect(10, 10, canvas.Width - 20, canvas.Height - 20);
-            
-                ctx.Font = "18px Arial";
-                ctx.FillStyle = "white";
-                ctx.FillText($"Canvas #{canvasCount}", 20, 40);
+                ctx.FillStyle = "hsl(200, 70%, 60%)";
+                ctx.FillRect(0, 0, canvas.Width, canvas.Height);
             }
         });
     }
@@ -248,17 +207,21 @@ BlazorCanvas2d provides several methods to export canvas content:
 ```csharp
 private async Task ExportCanvas(ICanvas canvas) 
 { 
-    // Get as a binary Blob (for file saving) 
-    Blob pngBlob = await canvas.ToBlob("image/png");
+    // Create an object URL (fast, browser-managed). Revoke when done.
+    string objectUrl = await canvas.CreateObjectURL("image/png");
     
-    // Get as a data URL (for embedding in img tags)
+    // Create a data URL (base64). Useful for small images.
     string dataUrl = await canvas.ToDataUrl("image/jpeg", 0.9);
 
-    // Get as an object URL (for temporary references)
-    string objectUrl = await canvas.CreateObjectURL("image/webp", 0.8);
+    // Low-level blob export returns a DTO containing the object URL:
+    BlobData blob = await canvas.ToBlob("image/webp", 0.8);
 
-    // Use JS interop to trigger a file download
-    await JS.InvokeVoidAsync("downloadFile", objectUrl, "canvas-export.png");
+    // Trigger a download using the library module (no eval):
+    var module = await JS.InvokeAsync<IJSObjectReference>(
+        "import",
+        "./_content/BlazorCanvas2d/blazorCanvas2d.js"
+    );
+    await module.InvokeVoidAsync("downloadUrl", objectUrl, "canvas-export.png", true);
 }
 ```
 

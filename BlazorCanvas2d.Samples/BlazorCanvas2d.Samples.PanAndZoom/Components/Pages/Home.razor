@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 
 <PageTitle>Home</PageTitle>
 
@@ -6,8 +6,8 @@
 
 @code
 {
-    CanvasManager _canvasManager;
-    IRenderContext _context;
+    private CanvasManager? _canvasManager;
+    private IRenderContext? _context;
 
     int _width = 800;
     int _height = 600;
@@ -34,7 +34,7 @@
         if (!firstRender)
             return;
 
-        _canvasManager.CreateCanvas("main", new CanvasCreationOptions()
+        _canvasManager?.CreateCanvas("main", new CanvasCreationOptions()
             {
                 Hidden = false,
                 Width = _width,
@@ -99,10 +99,10 @@
 
     private void DrawRect(float x, float y, float w, float h, string color)
     {
-        var gradient = _context.CreateLinearGradient(20, 0, 220, 0);
-        gradient.AddColorStop(0, "green");
-        gradient.AddColorStop(0.5f, "cyan");
-        gradient.AddColorStop(1, "green");
+        if (_context is null)
+        {
+            return;
+        }
 
         _context.FillStyle = color;
         _context.FillRect(x, y, w, h);
@@ -110,6 +110,10 @@
 
     private void Render()
     {
+        if (_context is null)
+        {
+            return;
+        }
 
         _context.SetTransform(1, 0, 0, 1, 0, 0);
 

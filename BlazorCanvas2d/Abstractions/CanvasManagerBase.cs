@@ -12,8 +12,28 @@ public abstract class CanvasManagerBase : ComponentBase
         this.StateHasChanged();
     }
 
+    public bool RemoveCanvas(string name)
+    {
+        var removed = this._names.Remove(name);
+        this._canvases.Remove(name);
+
+        if (removed)
+        {
+            this.StateHasChanged();
+        }
+
+        return removed;
+    }
+
     internal async ValueTask OnChildCanvasAddedAsync(ICanvas canvas)
     {
+        // Capture the canvas so callers can access it by name if needed.
+        // This also avoids relying on @ref with dictionary indexers.
+        if (!string.IsNullOrWhiteSpace(canvas.Name))
+        {
+            this._canvases[canvas.Name] = canvas;
+        }
+
         await this.OnCanvasAdded.InvokeAsync(canvas);
     }
 

@@ -1,4 +1,4 @@
-﻿namespace BlazorCanvas2d.Renderer;
+namespace BlazorCanvas2d.Renderer;
 
 internal sealed partial class RenderContext2D : IRenderContext
 {
@@ -77,8 +77,11 @@ internal sealed partial class RenderContext2D : IRenderContext
     public ValueTask<int> CreateImageDataAsync(int width, int height) =>
         this._blazorexAPI.InvokeAsync<int>("createImageData", this._id, width, height);
 
-    public async void PutImageData(int imageDataId, byte[] data, double x, double y) =>
-        await this._blazorexAPI.InvokeVoidAsync("putImageData", this._id, imageDataId, data, x, y);
+    public void PutImageData(int imageDataId, byte[] data, double x, double y) =>
+        _ = this.PutImageDataAsync(imageDataId, data, x, y);
+
+    public ValueTask PutImageDataAsync(int imageDataId, byte[] data, double x, double y) =>
+        this._blazorexAPI.InvokeVoidAsync("putImageData", this._id, imageDataId, data, x, y);
 
     public ValueTask<TextMetrics> MeasureText(string text) =>
         this.DirectCall<TextMetrics>("measureText", text);
@@ -125,8 +128,10 @@ internal sealed partial class RenderContext2D : IRenderContext
 
     public void SetLineDash(params float[] segments) => this.Call("setLineDash", segments);
 
-    public async void Resize(int width, int height) =>
-        await this._blazorexAPI.InvokeVoidAsync("resizeCanvas", this._id, width, height);
+    public void Resize(int width, int height) => _ = this.ResizeAsync(width, height);
+
+    public ValueTask ResizeAsync(int width, int height) =>
+        this._blazorexAPI.InvokeVoidAsync("resizeCanvas", this._id, width, height);
 
     public ICanvasPattern CreatePattern(ElementReference imageRef, RepeatPattern pattern)
     {

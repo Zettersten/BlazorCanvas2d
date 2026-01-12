@@ -1,4 +1,4 @@
-﻿@inherits CanvasManagerBase
+@inherits CanvasManagerBase
 
 <div class="blazorCanvas2d-canvases">
     <CascadingValue Value=@this>
@@ -9,22 +9,51 @@
             throw new InvalidOperationException($"Cannot set both {nameof(options.OnCanvasReady)} and {nameof(options.OnCanvasReadyAsync)}");
         }
 
-        EventCallback<ICanvas> onCanvasReady = 
-            options.OnCanvasReadyAsync != null ?
-            EventCallback.Factory.Create<ICanvas>(this, async (canvas) => await options.OnCanvasReadyAsync(canvas)) :
-            EventCallback.Factory.Create<ICanvas>(this, options.OnCanvasReady);
+        EventCallback<ICanvas> onCanvasReady =
+            options.OnCanvasReadyAsync is not null
+                ? EventCallback.Factory.Create<ICanvas>(
+                    this,
+                    (Func<ICanvas, Task>)(async canvas => await options.OnCanvasReadyAsync(canvas))
+                )
+                : options.OnCanvasReady is not null
+                    ? EventCallback.Factory.Create<ICanvas>(this, options.OnCanvasReady)
+                    : default;
+
+        var onFrameReady = options.OnFrameReady is not null
+            ? EventCallback.Factory.Create<float>(this, options.OnFrameReady)
+            : default;
+        var onMouseMove = options.OnMouseMove is not null
+            ? EventCallback.Factory.Create<MouseMoveEvent>(this, options.OnMouseMove)
+            : default;
+        var onMouseWheel = options.OnMouseWheel is not null
+            ? EventCallback.Factory.Create<MouseScrollEvent>(this, options.OnMouseWheel)
+            : default;
+        var onMouseDown = options.OnMouseDown is not null
+            ? EventCallback.Factory.Create<MouseClickEvent>(this, options.OnMouseDown)
+            : default;
+        var onMouseUp = options.OnMouseUp is not null
+            ? EventCallback.Factory.Create<MouseClickEvent>(this, options.OnMouseUp)
+            : default;
+        var onKeyDown = options.OnKeyDown is not null
+            ? EventCallback.Factory.Create<KeyboardPressEvent>(this, options.OnKeyDown)
+            : default;
+        var onKeyUp = options.OnKeyUp is not null
+            ? EventCallback.Factory.Create<KeyboardPressEvent>(this, options.OnKeyUp)
+            : default;
+        var onResize = options.OnResize is not null
+            ? EventCallback.Factory.Create<Size>(this, options.OnResize)
+            : default;
        
         <div id="@(name)Container" class="blazorCanvas2d-canvas-container" hidden="@options.Hidden">
-            <Canvas @ref="_canvases[name]"
-                OnCanvasReady="@onCanvasReady"
-                OnFrameReady="@options.OnFrameReady"
-                OnMouseMove="@options.OnMouseMove"
-                OnMouseWheel="@options.OnMouseWheel"
-                OnMouseDown="@options.OnMouseDown"
-                OnMouseUp="@options.OnMouseUp"
-                OnKeyDown="@options.OnKeyDown"
-                OnKeyUp="@options.OnKeyUp"
-                OnResize="@options.OnResize"
+            <Canvas OnCanvasReady="@onCanvasReady"
+                OnFrameReady="@onFrameReady"
+                OnMouseMove="@onMouseMove"
+                OnMouseWheel="@onMouseWheel"
+                OnMouseDown="@onMouseDown"
+                OnMouseUp="@onMouseUp"
+                OnKeyDown="@onKeyDown"
+                OnKeyUp="@onKeyUp"
+                OnResize="@onResize"
                 Width="@options.Width"
                 Height="@options.Height"
                 Alpha="@options.Alpha"

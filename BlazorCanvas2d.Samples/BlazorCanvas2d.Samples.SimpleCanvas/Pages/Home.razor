@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 
 <PageTitle>Home</PageTitle>
 
@@ -20,7 +20,7 @@
                     <div style="height: 264px;" class="w-100 d-block mx-auto bg-primary"></div>
                 }
                 <div class=" d-flex flex-column text-center gap-2">
-                    <button class="btn btn-primary" @onclick="() => this.GetBlobDataURL()">Take Screenshot</button>
+                    <button class="btn btn-primary" @onclick="async () => await this.GetBlobDataURL()">Take Screenshot</button>
                     <small class="text-muted">Uses the <kbd>.ToObjectUrl</kbd> Method</small>
                 </div>
             </div>
@@ -30,10 +30,10 @@
 
 @code
 {
-    CanvasManager _canvasManager;
+    private CanvasManager? _canvasManager;
     ElementReference _spritesheet;
-    IRenderContext _context;
-    ICanvas _canvas;
+    private IRenderContext? _context;
+    private ICanvas? _canvas;
 
     int _width = 800;
     int _height = 600;
@@ -61,7 +61,7 @@
             return;
         }
 
-        _canvasManager.CreateCanvas("main", new CanvasCreationOptions()
+        _canvasManager?.CreateCanvas("main", new CanvasCreationOptions()
             {
                 Hidden = false,
                 Width = _width,
@@ -91,6 +91,11 @@
 
     private async ValueTask GetBlobDataURL()
     {
+        if (this._canvas is null)
+        {
+            return;
+        }
+
         this.blobUrl = await this._canvas.CreateObjectURL("image/png");
     }
 
@@ -112,6 +117,11 @@
 
     private void Render()
     {
+        if (_context is null)
+        {
+            return;
+        }
+
         _context.GlobalCompositeOperation = GlobalCompositeOperation.SourceOver;
         _context.Filter = Filter.None();
         _context.ClearRect(0, 0, _width, _height);

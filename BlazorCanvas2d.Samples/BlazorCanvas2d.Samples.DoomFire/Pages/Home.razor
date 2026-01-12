@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 
 <PageTitle>Home</PageTitle>
 
@@ -6,10 +6,10 @@
 
 @code
 {
-    CanvasManager _canvasManager;
-    IRenderContext _context;
-    MouseMoveEvent _mousecoords;
-    ICanvas _fireCanvas;
+    private CanvasManager? _canvasManager;
+    private IRenderContext? _context;
+    private MouseMoveEvent _mousecoords;
+    private ICanvas? _fireCanvas;
 
     int _width = 800;
     int _height = 600;
@@ -18,7 +18,7 @@
     float _lastUpdate = 0;
     float _elapsedTime = 0;
 
-    private Services.FireRenderer _fireRenderer;
+    private Services.FireRenderer? _fireRenderer;
     private int _fireWidth = 256;
     private int _fireHeight = 64;
 
@@ -27,7 +27,7 @@
         if (!firstRender)
             return;
 
-        _canvasManager.CreateCanvas("fire", new CanvasCreationOptions()
+        _canvasManager?.CreateCanvas("fire", new CanvasCreationOptions()
         {
             Hidden = true,
             Width = _fireWidth,
@@ -35,7 +35,7 @@
             OnCanvasReadyAsync = this.OnFireCanvasReady,
             OnFrameReady = this.OnFireCanvasFrameReady,
         });
-        _canvasManager.CreateCanvas("main", new CanvasCreationOptions()
+        _canvasManager?.CreateCanvas("main", new CanvasCreationOptions()
         {
             Hidden = false,
             Width = _width,
@@ -56,6 +56,11 @@
 
     private void OnFireCanvasFrameReady(float timeStamp)
     {
+        if (_fireRenderer is null)
+        {
+            return;
+        }
+
         _fireRenderer.Update();
         _fireRenderer.Render();
     }
@@ -89,6 +94,11 @@
 
     private void Render()
     {
+        if (_context is null || _fireCanvas is null)
+        {
+            return;
+        }
+
         _context.ClearRect(0, 0, _width, _height);
 
         _context.DrawImage(_fireCanvas.ElementReference, 0, 0, _width, _height);

@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 
 <PageTitle>Home</PageTitle>
 
@@ -6,9 +6,9 @@
 
 @code
 {
-    CanvasManager _canvasManager;
-    IRenderContext _context;
-    MouseMoveEvent _mousecoords;
+    private CanvasManager? _canvasManager;
+    private IRenderContext? _context;
+    private MouseMoveEvent _mousecoords;
 
     int _width = 800;
     int _height = 600;
@@ -22,7 +22,7 @@
         if (!firstRender)
             return;
 
-        _canvasManager.CreateCanvas("main", new CanvasCreationOptions()
+        _canvasManager?.CreateCanvas("main", new CanvasCreationOptions()
         {
             Hidden = false,
             Width = _width,
@@ -63,6 +63,11 @@
 
     private void Render()
     {
+        if (_context is null)
+        {
+            return;
+        }
+
         _context.ClearRect(0, 0, _width, _height);
 
         var fps = 1000f / _elapsedTime;

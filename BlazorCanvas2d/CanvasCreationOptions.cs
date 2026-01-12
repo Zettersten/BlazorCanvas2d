@@ -1,12 +1,7 @@
-﻿namespace BlazorCanvas2d;
+namespace BlazorCanvas2d;
 
 public readonly struct CanvasCreationOptions
 {
-    /// <summary>
-    /// The underlying DOM element reference for the canvas.
-    /// </summary>
-    public ElementReference ElementReference { get; init; }
-
     /// <summary>
     /// the width of the canvas
     /// </summary>
@@ -47,7 +42,7 @@ public readonly struct CanvasCreationOptions
     /// <summary>
     /// fired when the canvas is ready to process events
     /// </summary>
-    public Action<ICanvas> OnCanvasReady { get; init; }
+    public Action<ICanvas>? OnCanvasReady { get; init; }
 
     /// <summary>
     /// async version of <see cref="OnCanvasReady"/>.
@@ -55,45 +50,45 @@ public readonly struct CanvasCreationOptions
     /// <remarks>
     /// <see cref="OnCanvasReady"/> will ALWAYS take precedence over this, if both are set.
     /// </remarks>
-    public Func<ICanvas, ValueTask> OnCanvasReadyAsync { get; init; }
+    public Func<ICanvas, ValueTask>? OnCanvasReadyAsync { get; init; }
 
     /// <summary>
     /// fired at every frame refresh
     /// </summary>
-    public Action<float> OnFrameReady { get; init; }
+    public Action<float>? OnFrameReady { get; init; }
 
     /// <summary>
     /// Fired when a key is released while the canvas has focus.
     /// </summary>
-    public Action<KeyboardPressEvent> OnKeyUp { get; init; }
+    public Action<KeyboardPressEvent>? OnKeyUp { get; init; }
 
     /// <summary>
     /// Fired when a key is pressed while the canvas has focus.
     /// </summary>
-    public Action<KeyboardPressEvent> OnKeyDown { get; init; }
+    public Action<KeyboardPressEvent>? OnKeyDown { get; init; }
 
     /// <summary>
     /// Fired when the mouse moves over the canvas.
     /// </summary>
-    public Action<MouseMoveEvent> OnMouseMove { get; init; }
+    public Action<MouseMoveEvent>? OnMouseMove { get; init; }
 
     /// <summary>
     /// Fired when the mouse wheel is scrolled over the canvas.
     /// </summary>
-    public Action<MouseScrollEvent> OnMouseWheel { get; init; }
+    public Action<MouseScrollEvent>? OnMouseWheel { get; init; }
 
     /// <summary>
     /// Fired when a mouse button is pressed down over the canvas.
     /// </summary>
-    public Action<MouseClickEvent> OnMouseDown { get; init; }
+    public Action<MouseClickEvent>? OnMouseDown { get; init; }
 
     /// <summary>
     /// Fired when a mouse button is released over the canvas.
     /// </summary>
-    public Action<MouseClickEvent> OnMouseUp { get; init; }
+    public Action<MouseClickEvent>? OnMouseUp { get; init; }
 
     /// <summary>
     /// Fired when the canvas is resized.
     /// </summary>
-    public Action<Size> OnResize { get; init; }
+    public Action<Size>? OnResize { get; init; }
 }

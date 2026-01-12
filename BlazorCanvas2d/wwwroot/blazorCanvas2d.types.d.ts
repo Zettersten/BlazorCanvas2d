@@ -9,9 +9,11 @@ export type CanvasContextOptions = {
 
 export type ContextInfo = {
     readonly id: string;
+    readonly canvas: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
     readonly managedInstance: DotNetObjectReference;
     readonly contextOptions: CanvasContextOptions;
+    readonly eventHandlers: Readonly<Record<EventType, EventHandler>>;
 };
 
 // C# MarshalReference equivalent - matches MarshalReference.cs structure
@@ -109,6 +111,11 @@ export type BlazorexAPI = {
     readonly removeContext: (ctxId: string) => boolean;
     readonly resizeCanvas: (ctxId: string, width: number, height: number) => void;
     readonly toBlob: (ctxId: string, type: string, quality?: number) => Promise<{ objectUrl: string } | null >;
+    readonly toDataUrl: (ctxId: string, type: string, quality?: number) => string | null;
+    readonly downloadUrl: (url: string, fileName: string, shouldRevoke?: boolean) => void;
 };
 
 export type CreateBlazorexAPI = () => BlazorexAPI; 
+
+// Convenience exports (module-level)
+export const downloadUrl: (url: string, fileName: string, shouldRevoke?: boolean) => void;

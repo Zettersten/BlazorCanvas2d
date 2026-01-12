@@ -757,3 +757,7 @@ sketch
 .azure
 .vs
 .vscode
+
+# Local .NET SDK installs (do not commit)
+.dotnet/
+dotnet-install.sh

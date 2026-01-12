@@ -1,4 +1,4 @@
-﻿namespace BlazorCanvas2d;
+namespace BlazorCanvas2d;
 
 /// <summary>
 /// Canvas abstraction for Blazor C#.
@@ -115,7 +115,7 @@ public interface ICanvas : IAsyncDisposable
     /// </param>
     /// <returns>
     /// A <see cref="ValueTask{Blob}"/> representing the asynchronous operation.
-    /// The result is a <see cref="Blob"/> containing the encoded image data.
+    /// The result contains a browser-managed object URL for the encoded image data.
     /// </returns>
     /// <exception cref="ArgumentException">Thrown when an unsupported MIME type is specified.</exception>
     /// <exception cref="ArgumentOutOfRangeException">

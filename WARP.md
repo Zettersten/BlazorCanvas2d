@@ -131,7 +131,7 @@ Each sample in `BlazorCanvas2d.Samples/` demonstrates specific functionality:
 
 ## Framework and Technology Stack
 
-- **.NET 9.0** - Target framework
+- **.NET 10.0** - Target framework
 - **Blazor WebAssembly** - Client-side hosting model
 - **TypeScript** - JavaScript interop with type safety
 - **Canvas 2D API** - Underlying web technology

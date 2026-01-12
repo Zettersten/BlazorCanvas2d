@@ -1,4 +1,4 @@
-﻿using BlazorCanvas2d.Renderer;
+using BlazorCanvas2d.Renderer;
 
 namespace BlazorCanvas2d;
 
@@ -7,6 +7,7 @@ public abstract class CanvasBase : ComponentBase, ICanvas
     private bool _disposed = false;
     private IJSObjectReference? _module;
     private IJSObjectReference? _blazorexAPI;
+    private DotNetObjectReference<CanvasBase>? _managedInstance;
 
     protected override async Task OnInitializedAsync()
     {
@@ -28,12 +29,12 @@ public abstract class CanvasBase : ComponentBase, ICanvas
 
         this._blazorexAPI = await this._module.InvokeAsync<IJSObjectReference>("createBlazorexAPI");
 
-        var managedInstance = DotNetObjectReference.Create(this);
+        this._managedInstance = DotNetObjectReference.Create(this);
 
         await this._blazorexAPI.InvokeVoidAsync(
             "initCanvas",
             this.Id,
-            managedInstance,
+            this._managedInstance,
             new
             {
                 alpha = this.Alpha,
@@ -216,23 +217,11 @@ public abstract class CanvasBase : ComponentBase, ICanvas
     {
         ArgumentNullException.ThrowIfNull(this._blazorexAPI);
 
-        try
-        {
-            var blobData = quality.HasValue
-                ? await this._blazorexAPI.InvokeAsync<BlobData>(
-                    "toBlob",
-                    this.Id,
-                    type,
-                    quality.Value
-                )
-                : await this._blazorexAPI.InvokeAsync<BlobData>("toBlob", this.Id, type);
+        var blobData = quality.HasValue
+            ? await this._blazorexAPI.InvokeAsync<BlobData>("toBlob", this.Id, type, quality.Value)
+            : await this._blazorexAPI.InvokeAsync<BlobData>("toBlob", this.Id, type);
 
-            return blobData;
-        }
-        catch (Exception ex)
-        {
-            throw;
-        }
+        return blobData;
     }
 
     /// <summary>
@@ -241,8 +230,18 @@ public abstract class CanvasBase : ComponentBase, ICanvas
     /// </summary>
     public async ValueTask<string> ToDataUrl(string type = "image/png", double? quality = null)
     {
-        var blob = await this.ToBlob(type, quality);
-        return blob.ObjectUrl;
+        ArgumentNullException.ThrowIfNull(this._blazorexAPI);
+
+        var url = quality.HasValue
+            ? await this._blazorexAPI.InvokeAsync<string?>(
+                "toDataUrl",
+                this.Id,
+                type,
+                quality.Value
+            )
+            : await this._blazorexAPI.InvokeAsync<string?>("toDataUrl", this.Id, type);
+
+        return url ?? string.Empty;
     }
 
     /// <summary>
@@ -278,6 +277,8 @@ public abstract class CanvasBase : ComponentBase, ICanvas
                 {
                     await this._module.DisposeAsync();
                 }
+
+                this._managedInstance?.Dispose();
             }
             catch (JSDisconnectedException) { }
 
