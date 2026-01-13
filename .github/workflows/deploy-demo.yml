@@ -25,39 +25,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
       - name: Publish SimpleCanvas (Release)
-        run: dotnet publish "BlazorCanvas2d.Samples/BlazorCanvas2d.Samples.SimpleCanvas/BlazorCanvas2d.Samples.SimpleCanvas.csproj" -c Release -o "artifacts/publish"
+        run: dotnet publish "BlazorCanvas2d.Samples/BlazorCanvas2d.Samples.SimpleCanvas/BlazorCanvas2d.Samples.SimpleCanvas.csproj" -c Release -o "artifacts/publish" -p:BaseHref="/${{ github.event.repository.name }}/"
 
       - name: Prepare GitHub Pages assets
         shell: bash
         run: |
           set -euo pipefail
           WWWROOT="artifacts/publish/wwwroot"
-          REPO_NAME="${GITHUB_REPOSITORY#*/}"
-          BASE_HREF="/${REPO_NAME}/"
-
-          # Blazor WASM needs correct base href when hosted from /<repo>/
-          python3 - <<'PY'
-          import os
-          import pathlib
-          import re
-
-          wwwroot = pathlib.Path(os.environ["WWWROOT"])
-          base_href = os.environ["BASE_HREF"]
-          index = wwwroot / "index.html"
-          html = index.read_text(encoding="utf-8")
-          html2, n = re.subn(r'<base href="[^"]*"\s*/>', f'<base href="{base_href}" />', html, count=1)
-          if n != 1:
-              raise SystemExit("Expected exactly one <base href=\"...\" /> in index.html")
-          index.write_text(html2, encoding="utf-8")
-          (wwwroot / "404.html").write_text(html2, encoding="utf-8")
-          (wwwroot / ".nojekyll").write_text("", encoding="utf-8")
-          PY
+          # Ensure SPA fallback works for GitHub Pages (client-side routing)
+          cp "${WWWROOT}/index.html" "${WWWROOT}/404.html"
+          # Avoid Pages attempting to run Jekyll processing
+          : > "${WWWROOT}/.nojekyll"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
