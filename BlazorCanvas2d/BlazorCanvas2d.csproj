@@ -12,11 +12,11 @@
     <!--
       Package versioning:
       - On tag builds: use the tag name (optionally prefixed with 'v').
-      - On PR/branch builds (e.g. refs/pull/*/merge where GITHUB_REF_NAME can contain '/'):
-        use a valid SemVer pre-release so `dotnet restore` doesn't fail.
+      - On non-tag CI builds: use a SemVer pre-release based on the run number.
+      - Locally: use a fixed SemVer version.
     -->
     <Version
-      Condition="'$(GITHUB_REF_NAME)' != '' and $([System.String]::Copy('$(GITHUB_REF_NAME)').Contains('/')) == 'false'"
+      Condition="'$(Version)' == '' and '$(GITHUB_REF_TYPE)' == 'tag' and '$(GITHUB_REF_NAME)' != ''"
     >
       $(GITHUB_REF_NAME.TrimStart('v'))
     </Version>
