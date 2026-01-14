@@ -41,6 +41,25 @@ jobs:
         run: |
           set -euo pipefail
           WWWROOT="artifacts/publish/wwwroot"
+          # GitHub Pages serves this app from "/<repo-name>/", not "/".
+          # Some SDK combinations don't reliably apply -p:BaseHref at publish-time,
+          # so we rewrite the published index.html as a backstop.
+          REPO_NAME="${{ github.event.repository.name }}"
+          BASE_HREF="/${REPO_NAME}/"
+          WWWROOT="$WWWROOT" BASE_HREF="$BASE_HREF" python3 - << 'PY'
+          import os, re
+          wwwroot = os.environ["WWWROOT"]
+          base_href = os.environ["BASE_HREF"]
+          index_path = os.path.join(wwwroot, "index.html")
+          with open(index_path, "r", encoding="utf-8") as f:
+              html = f.read()
+          # Replace any existing <base href="..."> with the Pages base.
+          html2, n = re.subn(r'<base\s+href="[^"]*"\s*/?>', f'<base href="{base_href}" />', html, count=1, flags=re.IGNORECASE)
+          if n != 1:
+              raise SystemExit(f"Expected to replace 1 <base ...> tag, replaced {n}")
+          with open(index_path, "w", encoding="utf-8") as f:
+              f.write(html2)
+          PY
           # Ensure SPA fallback works for GitHub Pages (client-side routing)
           cp "${WWWROOT}/index.html" "${WWWROOT}/404.html"
           # Avoid Pages attempting to run Jekyll processing
