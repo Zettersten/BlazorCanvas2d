@@ -6,6 +6,26 @@ const DEFAULT_CANVAS_OPTIONS = {
 };
 const MARSHAL_REFERENCE_PROPERTIES = ['fillStyle', 'strokeStyle'];
 const PRINTABLE_KEYS = ['Enter', 'Tab', 'Backspace', 'Delete'];
+const GRADIENT_METHODS = new Set(['createLinearGradient', 'createRadialGradient', 'createConicGradient']);
+const sanitizeNonFiniteNumbers = (args) => {
+    let out = null;
+    for (let i = 0; i < args.length; i++) {
+        const v = args[i];
+        if (typeof v === 'number' && !Number.isFinite(v)) {
+            out ?? (out = Array.from(args));
+            out[i] = 0;
+        }
+    }
+    return out ?? args;
+};
+const sanitizeNonFiniteNumbersInPlace = (args) => {
+    for (let i = 0; i < args.length; i++) {
+        const v = args[i];
+        if (typeof v === 'number' && !Number.isFinite(v)) {
+            args[i] = 0;
+        }
+    }
+};
 const createBlazorexAPIImpl = () => {
     const canvasContexts = new Map();
     const elementCache = new Map();
@@ -165,11 +185,17 @@ const createBlazorexAPIImpl = () => {
         }
         const firstParam = parameters[0];
         if (!isMarshalReference(firstParam)) {
-            return typedContext[methodName](...parameters);
+            const safeParams = GRADIENT_METHODS.has(methodName)
+                ? sanitizeNonFiniteNumbers(parameters)
+                : parameters;
+            return typedContext[methodName](...safeParams);
         }
         const marshalRef = firstParam;
         if (!marshalRef.isElementRef) {
             const args = parameters.slice(1);
+            if (GRADIENT_METHODS.has(methodName)) {
+                sanitizeNonFiniteNumbersInPlace(args);
+            }
             const existingObject = marshalledObjects.get(marshalRef.id);
             if (existingObject?.[methodName]) {
                 if (marshalRef.classInitializer) {

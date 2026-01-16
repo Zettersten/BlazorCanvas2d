@@ -30,6 +30,31 @@ const DEFAULT_CANVAS_OPTIONS: CanvasContextOptions = {
 const MARSHAL_REFERENCE_PROPERTIES = ['fillStyle', 'strokeStyle'] as const;
 const PRINTABLE_KEYS = ['Enter', 'Tab', 'Backspace', 'Delete'];
 
+const GRADIENT_METHODS = new Set(['createLinearGradient', 'createRadialGradient', 'createConicGradient']);
+
+const sanitizeNonFiniteNumbers = (args: readonly unknown[]): unknown[] => {
+    let out: unknown[] | null = null;
+
+    for (let i = 0; i < args.length; i++) {
+        const v = args[i];
+        if (typeof v === 'number' && !Number.isFinite(v)) {
+            out ??= Array.from(args);
+            out[i] = 0;
+        }
+    }
+
+    return out ?? (args as unknown[]);
+};
+
+const sanitizeNonFiniteNumbersInPlace = (args: unknown[]): void => {
+    for (let i = 0; i < args.length; i++) {
+        const v = args[i];
+        if (typeof v === 'number' && !Number.isFinite(v)) {
+            args[i] = 0;
+        }
+    }
+};
+
 /**
  * Creates a new BlazorCanvas2d API instance with isolated state
  * @returns A frozen BlazorexAPI instance
@@ -312,7 +337,10 @@ const createBlazorexAPIImpl = (): BlazorexAPI => {
 
         // Hot path: no marshal reference => no need to copy/modify args
         if (!isMarshalReference(firstParam)) {
-            return typedContext[methodName](...parameters);
+            const safeParams = GRADIENT_METHODS.has(methodName)
+                ? sanitizeNonFiniteNumbers(parameters)
+                : (parameters as unknown[]);
+            return typedContext[methodName](...safeParams);
         }
 
         // Handle C# MarshalReference objects
@@ -321,6 +349,9 @@ const createBlazorexAPIImpl = (): BlazorexAPI => {
         if (!marshalRef.isElementRef) {
             // This is a marshal object reference (gradient, pattern, etc.)
             const args = parameters.slice(1);
+            if (GRADIENT_METHODS.has(methodName)) {
+                sanitizeNonFiniteNumbersInPlace(args);
+            }
             const existingObject = marshalledObjects.get(marshalRef.id) as
                 | Record<string, Function>
                 | undefined;
